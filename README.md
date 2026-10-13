@@ -70,12 +70,6 @@ Access the complete ChatGPT Web surface — model picker, deep thinking controls
 
 > **Prerequisites**: macOS 12.0+ (Apple Silicon M-Series or Intel Mac) and an active ChatGPT account.
 
-### Option 1: Direct Download (Recommended)
-
-1. **Download** the latest [ChatGPT.Swift.dmg](https://github.com/GravityPoet/chatgpt-web-desktop/releases/latest/download/ChatGPT.Swift.dmg) (~2.7 MB) or visit the [Releases Page](https://github.com/GravityPoet/chatgpt-web-desktop/releases/latest) to inspect checksums and changelogs.
-2. Open the DMG and drag **ChatGPT Swift** into your `Applications` folder.
-3. Launch `ChatGPT Swift` and sign in with your OpenAI account.
-
 *(Note: On first launch of local self-signed builds, if macOS displays a developer verification prompt, click "Open Anyway" in **System Settings > Privacy & Security**).*
 
 ### Option 2: Build from Source
