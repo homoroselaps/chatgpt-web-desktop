@@ -5,7 +5,7 @@ struct AppDiagnosticsState {
     let report: String
     let cloudflareSummary: String
 
-    init(generatedAt: String, report: String, cloudflareSummary: String = "暂无 Cloudflare 事件") {
+    init(generatedAt: String, report: String, cloudflareSummary: String = "No Cloudflare events") {
         self.generatedAt = generatedAt
         self.report = report
         self.cloudflareSummary = cloudflareSummary
@@ -34,7 +34,7 @@ final class DiagnosticsWindowController: NSWindowController {
             backing: .buffered,
             defer: false
         )
-        window.title = "诊断"
+        window.title = "Diagnostics"
         window.minSize = NSSize(width: 640, height: 460)
         window.isReleasedWhenClosed = false
         if #available(macOS 11.0, *) {
@@ -58,7 +58,7 @@ final class DiagnosticsWindowController: NSWindowController {
 
     func update(state: AppDiagnosticsState) {
         self.state = state
-        generatedLabel.stringValue = "生成时间：\(state.generatedAt) · 账号、会话 URL 与标题已脱敏"
+        generatedLabel.stringValue = "Generated: \(state.generatedAt) · Accounts, conversation URLs, and titles redacted"
         cloudflareSummaryLabel.stringValue = state.cloudflareSummary
         textView.string = state.report
     }
@@ -82,20 +82,20 @@ final class DiagnosticsWindowController: NSWindowController {
         header.spacing = 10
         header.translatesAutoresizingMaskIntoConstraints = false
 
-        let title = NSTextField(labelWithString: "运行诊断")
+        let title = NSTextField(labelWithString: "Runtime Diagnostics")
         title.font = .systemFont(ofSize: 22, weight: .semibold)
         title.textColor = .labelColor
 
         let spacer = NSView()
         spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
 
-        let refreshButton = NSButton(title: "刷新", target: self, action: #selector(refreshReport(_:)))
+        let refreshButton = NSButton(title: "Refresh", target: self, action: #selector(refreshReport(_:)))
         refreshButton.bezelStyle = .rounded
 
-        let copyButton = NSButton(title: "复制诊断信息", target: self, action: #selector(copyReport(_:)))
+        let copyButton = NSButton(title: "Copy Diagnostics", target: self, action: #selector(copyReport(_:)))
         copyButton.bezelStyle = .rounded
 
-        let exportButton = NSButton(title: "导出诊断包…", target: self, action: #selector(exportPackage(_:)))
+        let exportButton = NSButton(title: "Export Diagnostics Bundle…", target: self, action: #selector(exportPackage(_:)))
         exportButton.bezelStyle = .rounded
 
         header.addArrangedSubview(title)
@@ -124,7 +124,7 @@ final class DiagnosticsWindowController: NSWindowController {
         cloudflareStack.edgeInsets = NSEdgeInsets(top: 10, left: 12, bottom: 10, right: 12)
         cloudflareStack.translatesAutoresizingMaskIntoConstraints = false
 
-        let cloudflareTitle = NSTextField(labelWithString: "Cloudflare 会话")
+        let cloudflareTitle = NSTextField(labelWithString: "Cloudflare Session")
         cloudflareTitle.font = .systemFont(ofSize: 13, weight: .semibold)
         cloudflareTitle.textColor = .labelColor
         cloudflareSummaryLabel.font = .systemFont(ofSize: 12, weight: .regular)

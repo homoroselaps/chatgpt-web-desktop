@@ -46,9 +46,9 @@ public enum DownloadFilename {
             filename = "chatgpt-image"
         }
 
-        if URL(fileURLWithPath: filename).pathExtension.isEmpty,
-           let ext = fileExtension(forMIMEType: mimeType) {
-            filename += ".\(ext)"
+        filename = sanitize(filename)
+        if let ext = fileExtension(forMIMEType: mimeType) {
+            filename = (filename as NSString).deletingPathExtension + ".\(ext)"
         }
 
         return filename

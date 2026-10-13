@@ -20,7 +20,7 @@ final class NotificationIntegrationTests: XCTestCase {
             scheduler.requests,
             [CompletionNotificationRequest(
                 identifier: "notification-id",
-                title: "ChatGPT 回复完成",
+                title: "ChatGPT Reply Complete",
                 body: "Project chat"
             )]
         )

@@ -55,9 +55,9 @@ public enum DiagnosticRedactor {
 
     public static func profileLabel(isDefault: Bool, persistent: Bool = true) -> String {
         guard persistent else {
-            return "无痕"
+            return "Private"
         }
-        return isDefault ? "默认" : "自定义空间（名称已脱敏）"
+        return isDefault ? "Default" : "Custom Profile (Name Redacted)"
     }
 
     public static func pageTitle(_ title: String?) -> String {

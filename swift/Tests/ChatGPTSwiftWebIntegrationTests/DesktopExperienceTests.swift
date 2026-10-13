@@ -175,10 +175,10 @@ final class DesktopExperienceTests: XCTestCase {
     }
 
     func testFailureMessagesDistinguishNetworkCausesAndHTTPResponseHookExists() {
-        XCTAssertTrue(NavigationFailure.description(for: URLError(.cannotFindHost), offline: false).contains("解析"))
-        XCTAssertTrue(NavigationFailure.description(for: URLError(.cannotConnectToHost), offline: false).contains("连接服务器"))
-        XCTAssertTrue(NavigationFailure.description(for: URLError(.timedOut), offline: false).contains("超时"))
-        XCTAssertTrue(NavigationFailure.description(for: URLError(.timedOut), offline: true).contains("断开"))
+        XCTAssertTrue(NavigationFailure.description(for: URLError(.cannotFindHost), offline: false).contains("resolve"))
+        XCTAssertTrue(NavigationFailure.description(for: URLError(.cannotConnectToHost), offline: false).contains("connect to the server"))
+        XCTAssertTrue(NavigationFailure.description(for: URLError(.timedOut), offline: false).contains("timed out"))
+        XCTAssertTrue(NavigationFailure.description(for: URLError(.timedOut), offline: true).contains("disconnected"))
         let controller = BrowserWindowController(initialURL: nil, title: "Hook fixture", isPopup: true, persistent: false)
         defer { controller.dispose() }
         XCTAssertTrue(controller.responds(to: NSSelectorFromString("webView:decidePolicyForNavigationResponse:decisionHandler:")))

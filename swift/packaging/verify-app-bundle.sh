@@ -95,8 +95,12 @@ if [[ "$DISTRIBUTION" == "developer-id" ]] && ! printf '%s' "$signing_details" |
   echo "error: developer-id verification requires a Developer ID Application signing identity" >&2
   exit 1
 fi
-if ! entitlements="$(/usr/bin/codesign -d --entitlements - "$APP_PATH" 2>/dev/null)"; then
+if ! entitlements="$(/usr/bin/codesign -d --entitlements - --xml "$APP_PATH" 2>/dev/null | /usr/bin/plutil -convert xml1 -o - -)"; then
   echo "error: unable to inspect app entitlements" >&2
+  exit 1
+fi
+if [[ "$(printf '%s' "$entitlements" | /usr/bin/plutil -extract 'com\.apple\.security\.device\.audio-input' raw -o - - 2>/dev/null || true)" != "true" ]]; then
+  echo "error: app lacks the microphone audio-input entitlement" >&2
   exit 1
 fi
 for forbidden_entitlement in \
@@ -115,7 +119,7 @@ fi
 if [[ "$DISTRIBUTION" == "github" ]]; then
   while IFS= read -r entitlement_key; do
     case "$entitlement_key" in
-      com.apple.security.cs.disable-library-validation) ;;
+      com.apple.security.cs.disable-library-validation|com.apple.security.device.audio-input) ;;
       *)
         echo "error: local/GitHub app carries an unapproved security entitlement: $entitlement_key" >&2
         exit 1

@@ -112,6 +112,9 @@ SIGNING_DISTRIBUTION="github"
 case "$SIGN_IDENTITY" in
   "Developer ID Application:"*)
     SIGNING_DISTRIBUTION="developer-id"
+    if [[ -z "$SIGN_ENTITLEMENTS" ]]; then
+      SIGN_ENTITLEMENTS="$ROOT/packaging/release.entitlements"
+    fi
     ;;
   *)
     if [[ -z "$SIGN_ENTITLEMENTS" ]]; then

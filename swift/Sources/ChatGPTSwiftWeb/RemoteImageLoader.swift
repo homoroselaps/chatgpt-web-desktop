@@ -23,30 +23,30 @@ enum RemoteImageLoadError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .invalidURL:
-            return "图像地址必须是 HTTPS URL。"
+            return "The image address must be an HTTPS URL."
         case .blockedAddress:
-            return "为避免访问本机或内网地址，已阻止此图像请求。"
+            return "This image request was blocked to prevent access to local or private network addresses."
         case .dnsResolutionFailed:
-            return "无法安全解析图像服务器地址。"
+            return "Cannot safely resolve the image server address."
         case .invalidResponse:
-            return "服务器没有返回有效的 HTTP 响应。"
+            return "The server did not return a valid HTTP response."
         case .invalidRedirect:
-            return "服务器尝试重定向到不安全的非 HTTPS 地址。"
+            return "The server attempted to redirect to an unsafe non-HTTPS address."
         case let .httpStatus(statusCode):
-            return "服务器返回 HTTP \(statusCode)。"
+            return "The server returned HTTP \(statusCode)."
         case .invalidContentLength:
-            return "服务器返回了无效的 Content-Length。"
+            return "The server returned an invalid Content-Length."
         case let .unsupportedMIMEType(mimeType):
             if let mimeType, !mimeType.isEmpty {
-                return "服务器返回的内容类型不是图像（\(mimeType)）。"
+                return "The server returned a non-image content type (\(mimeType))."
             }
-            return "服务器没有返回图像内容类型。"
+            return "The server did not return an image content type."
         case let .tooLarge(maximumBytes):
-            return "图像超过 \(maximumBytes / 1024 / 1024) MB。"
+            return "The image exceeds \(maximumBytes / 1024 / 1024) MB."
         case .empty:
-            return "图像数据为空。"
+            return "Image data is empty."
         case .fileWriteFailed:
-            return "无法写入临时图像文件。"
+            return "Cannot write the temporary image file."
         }
     }
 }
@@ -267,6 +267,7 @@ final class RemoteImageLoader: NSObject, URLSessionDataDelegate, URLSessionTaskD
                 throw RemoteImageLoadError.fileWriteFailed
             }
             self.temporaryFileURL = temporaryFileURL
+            try DownloadStore.quarantine(temporaryFileURL)
             fileHandle = try FileHandle(forWritingTo: temporaryFileURL)
             mimeType = normalizedMIMEType
             completionHandler(.allow)

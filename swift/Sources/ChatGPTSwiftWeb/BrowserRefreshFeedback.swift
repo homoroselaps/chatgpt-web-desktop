@@ -150,43 +150,43 @@ extension BrowserWindowController {
         let activeController = dataVerificationWindow ?? self
         let feedback = activeController.refreshFeedback
         let loading = feedback.state == .loading
-        let verb = feedback.isManualRefresh ? "刷新" : "加载"
+        let verb = feedback.isManualRefresh ? "Refresh" : "Load"
         let label: String
         let symbol: String?
         let tint: NSColor?
         switch feedback.state {
         case .idle:
             if dataVerificationWindow != nil {
-                label = "重新加载验证页面"
+                label = "Reload Verification Page"
             } else if dataLoadState.requiresVerification {
-                label = "完成安全验证并重试"
+                label = "Complete Security Verification and Retry"
             } else if dataLoadState.hasFailure {
-                label = "重试加载\(dataLoadState.summary)"
+                label = "Retry Loading \(dataLoadState.summary)"
             } else if modelLoadFailureActive {
-                label = "重试加载模型"
+                label = "Retry Loading Models"
             } else {
-                label = isShowingBlankContent ? "恢复空白页面" : "重新加载"
+                label = isShowingBlankContent ? "Recover Blank Page" : "Reload"
             }
             symbol = "arrow.clockwise"
             tint = modelLoadFailureActive || dataLoadState.hasFailure ? .systemOrange : nil
         case .loading:
             if activeController.isCloudflareChallengeActive {
-                label = "正在验证页面"
+                label = "Verifying Page"
             } else if feedback.isVerifying {
-                label = "正在确认页面内容"
+                label = "Checking Page Content"
             } else {
                 let percent = max(1, min(99, Int(activeController.webView.estimatedProgress * 100)))
-                label = "正在\(verb)页面（约 \(percent)%）"
+                label = "\(verb) Page (About \(percent)%)"
             }
             symbol = nil
             tint = nil
         case .completed:
-            label = "刷新完成"
+            label = "Refresh Complete"
             symbol = "checkmark.circle.fill"
             tint = .systemGreen
         case .failed:
-            label = dataVerificationWindow != nil ? "重新加载验证页面"
-                : (dataLoadState.requiresVerification ? "完成安全验证并重试" : "\(verb)未完成，点击重试")
+            label = dataVerificationWindow != nil ? "Reload Verification Page"
+                : (dataLoadState.requiresVerification ? "Complete Security Verification and Retry" : "\(verb) Incomplete. Click to Retry")
             symbol = "exclamationmark.triangle.fill"
             tint = .systemOrange
         }
@@ -223,7 +223,7 @@ extension BrowserWindowController {
             let blank = report["blank"] as? Bool != false
             let ready = report["readyState"] as? String == "complete"
             if challenge {
-                self.beginCloudflareChallenge(reason: "刷新后内容探针检测到挑战页")
+                self.beginCloudflareChallenge(reason: "Content probe detected a challenge after refresh")
             } else if self.isCloudflareChallengeActive,
                       ready,
                       let host = self.webView.url?.host?.lowercased(),

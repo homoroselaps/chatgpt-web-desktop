@@ -61,21 +61,21 @@ final class RefreshFeedbackTests: XCTestCase {
         XCTAssertEqual(controller.refreshButtonState, .loading, "Feedback starts synchronously with the click")
         XCTAssertFalse(try XCTUnwrap(controller.navigationReloadSpinner).isHidden)
         XCTAssertFalse(try XCTUnwrap(controller.navigationReloadButton).isEnabled)
-        XCTAssertTrue(controller.navigationReloadButton?.accessibilityLabel()?.contains("正在刷新") == true)
+        XCTAssertTrue(controller.navigationReloadButton?.accessibilityLabel()?.contains("Refresh Page") == true)
         controller.reload(nil)
         XCTAssertEqual(controller.refreshFeedback.generation, generation, "A duplicate click must not restart the load")
         controller.updateNativeChromeStatus()
-        XCTAssertTrue(controller.navigationReloadButton?.accessibilityLabel()?.contains("正在刷新") == true)
+        XCTAssertTrue(controller.navigationReloadButton?.accessibilityLabel()?.contains("Refresh Page") == true)
         waitForState(.completed, in: controller)
         XCTAssertEqual(handler.requestCount, 2, "One initial load and exactly one refresh")
-        XCTAssertEqual(controller.navigationReloadButton?.accessibilityLabel(), "刷新完成")
+        XCTAssertEqual(controller.navigationReloadButton?.accessibilityLabel(), "Refresh Complete")
         XCTAssertTrue(controller.navigationReloadSpinner?.isHidden == true)
         XCTAssertTrue(controller.navigationReloadButton?.isEnabled == true)
         XCTAssertEqual(controller.navigationReloadButton?.contentTintColor, .systemGreen)
         view.layoutSubtreeIfNeeded()
         XCTAssertEqual(controller.navigationReloadButton?.frame, before)
         waitForState(.idle, in: controller)
-        XCTAssertEqual(controller.navigationReloadButton?.accessibilityLabel(), "重新加载")
+        XCTAssertEqual(controller.navigationReloadButton?.accessibilityLabel(), "Reload")
         XCTAssertNil(controller.navigationReloadButton?.contentTintColor)
     }
 
@@ -120,7 +120,7 @@ final class RefreshFeedbackTests: XCTestCase {
         controller.refreshFeedback.trackRequestedNavigation(nil)
         XCTAssertEqual(controller.refreshButtonState, .failed)
         XCTAssertTrue(controller.navigationReloadButton?.isEnabled == true)
-        XCTAssertEqual(controller.navigationReloadButton?.accessibilityLabel(), "刷新未完成，点击重试")
+        XCTAssertEqual(controller.navigationReloadButton?.accessibilityLabel(), "Refresh Incomplete. Click to Retry")
         XCTAssertEqual(controller.navigationReloadButton?.contentTintColor, .systemOrange)
         XCTAssertTrue(controller.refreshFeedback.beginRefresh(), "Failure must permit retry")
     }
@@ -173,7 +173,7 @@ final class RefreshFeedbackTests: XCTestCase {
 
         XCTAssertTrue(BrowserWindowController.isCloudflareChallengeResponse(challenge))
         XCTAssertFalse(BrowserWindowController.isCloudflareChallengeResponse(ordinaryForbidden))
-        XCTAssertEqual(BrowserWindowController.navigationHTTPFailureMessage(for: ordinaryForbidden.statusCode), "页面请求未完成（HTTP 403），可以重试")
+        XCTAssertEqual(BrowserWindowController.navigationHTTPFailureMessage(for: ordinaryForbidden.statusCode), "Page request incomplete (HTTP 403). Try again")
         let challengeURLResponse = try XCTUnwrap(HTTPURLResponse(
             url: URL(string: "https://chatgpt.com/cdn-cgi/challenge-platform/h/g/orchestrate/jsch/v1?ray=fixture")!,
             statusCode: 403,
@@ -231,10 +231,10 @@ final class RefreshFeedbackTests: XCTestCase {
         controller.modelLoadFailureActive = true
         controller.statusLabel = NSTextField(labelWithString: "")
         controller.updateRefreshButtonAppearance()
-        XCTAssertEqual(controller.navigationReloadButton?.accessibilityLabel(), "重试加载模型")
-        XCTAssertEqual(controller.navigationReloadButton?.toolTip, "重试加载模型")
+        XCTAssertEqual(controller.navigationReloadButton?.accessibilityLabel(), "Retry Loading Models")
+        XCTAssertEqual(controller.navigationReloadButton?.toolTip, "Retry Loading Models")
         controller.updateNativeChromeStatus()
-        XCTAssertEqual(controller.lastPresentedStatusText, "模型列表加载失败，点击导航栏重试")
+        XCTAssertEqual(controller.lastPresentedStatusText, "Model list failed to load. Click the navigation bar to retry")
     }
 
     func testBlankAndChallengeContentCannotProduceCompletion() throws {
@@ -258,7 +258,7 @@ final class RefreshFeedbackTests: XCTestCase {
             controller.verifyRefreshedPage(navigation: navigation, attempt: 10)
             waitForState(.failed, in: controller)
             XCTAssertTrue(controller.navigationReloadButton?.isEnabled == true)
-            XCTAssertFalse(controller.navigationReloadButton?.accessibilityLabel()?.contains("刷新完成") == true)
+            XCTAssertFalse(controller.navigationReloadButton?.accessibilityLabel()?.contains("Refresh Complete") == true)
         }
     }
 

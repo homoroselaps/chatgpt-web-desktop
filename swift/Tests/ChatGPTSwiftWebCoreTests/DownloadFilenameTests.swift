@@ -24,6 +24,11 @@ final class DownloadFilenameTests: XCTestCase {
         XCTAssertEqual(url.path, "/tmp/downloads/chatgpt-image-2.png")
     }
 
+    func testImageFilenameReplacesUnrelatedExtensionsAndSanitizesPaths() {
+        XCTAssertEqual(DownloadFilename.imageFilename(suggestedFilename: "claimed-image.zip", fallback: "unused", mimeType: "image/png"), "claimed-image.png")
+        XCTAssertEqual(DownloadFilename.imageFilename(suggestedFilename: "../image.exe", fallback: "unused", mimeType: "image/jpeg"), "..-image.jpg")
+    }
+
     func testImageFilenameAddsExtensionFromMimeType() throws {
         XCTAssertEqual(
             DownloadFilename.imageFilename(suggestedFilename: nil, fallback: "chatgpt-image", mimeType: "image/png"),
@@ -39,7 +44,7 @@ final class DownloadFilenameTests: XCTestCase {
         )
         XCTAssertEqual(
             DownloadFilename.imageFilename(suggestedFilename: "already.jpg", fallback: "unused", mimeType: "image/png"),
-            "already.jpg"
+            "already.png"
         )
     }
 }

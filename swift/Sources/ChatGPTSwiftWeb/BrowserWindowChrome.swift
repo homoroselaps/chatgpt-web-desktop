@@ -216,7 +216,7 @@ extension BrowserWindowController {
         case .chatGPTBack:
             let item = makeToolbarItem(
                 identifier: itemIdentifier,
-                label: "后退",
+                label: "Back",
                 symbolName: "chevron.left",
                 action: #selector(goBack(_:))
             )
@@ -225,7 +225,7 @@ extension BrowserWindowController {
         case .chatGPTForward:
             let item = makeToolbarItem(
                 identifier: itemIdentifier,
-                label: "前进",
+                label: "Forward",
                 symbolName: "chevron.right",
                 action: #selector(goForward(_:))
             )
@@ -234,7 +234,7 @@ extension BrowserWindowController {
         case .chatGPTReload:
             let item = makeToolbarItem(
                 identifier: itemIdentifier,
-                label: "重新加载",
+                label: "Reload",
                 symbolName: "arrow.clockwise",
                 action: #selector(reload(_:))
             )
@@ -244,7 +244,7 @@ extension BrowserWindowController {
             return makeProfileToolbarItem(identifier: itemIdentifier)
         case .chatGPTDownloads:
             let item = NSToolbarItem(itemIdentifier: itemIdentifier)
-            item.label = "下载中心"
+            item.label = "Download Center"
             item.paletteLabel = item.label
             item.visibilityPriority = .standard
             // Compact icon-first buttons: full meaning lives in tooltip/AX/menu, not in
@@ -252,7 +252,7 @@ extension BrowserWindowController {
             let button = NSButton(title: "", target: self,
                                   action: #selector(showDownloads(_:)))
             button.bezelStyle = .texturedRounded
-            button.image = NSImage(systemSymbolName: "arrow.down.circle", accessibilityDescription: "下载中心")
+            button.image = NSImage(systemSymbolName: "arrow.down.circle", accessibilityDescription: "Download Center")
             button.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 18, weight: .medium)
             button.imagePosition = .imageOnly
             button.imageScaling = .scaleProportionallyDown
@@ -266,7 +266,7 @@ extension BrowserWindowController {
             button.toolTip = item.label
             // Keep breathing room around the hit target and download counts.
             item.view = actionToolbarContainer(for: button)
-            let menuItem = NSMenuItem(title: "打开下载中心", action: #selector(showDownloads(_:)), keyEquivalent: "")
+            let menuItem = NSMenuItem(title: "Open Download Center", action: #selector(showDownloads(_:)), keyEquivalent: "")
             menuItem.target = self
             item.menuFormRepresentation = menuItem
             downloadButton = button
@@ -284,7 +284,7 @@ extension BrowserWindowController {
 
     private func makeProfileToolbarItem(identifier: NSToolbarItem.Identifier) -> NSToolbarItem {
         let item = NSToolbarItem(itemIdentifier: identifier)
-        item.label = "账号空间"
+        item.label = "Profiles"
         item.paletteLabel = item.label
         item.visibilityPriority = .high
 
@@ -307,7 +307,7 @@ extension BrowserWindowController {
         group.translatesAutoresizingMaskIntoConstraints = false
         group.heightAnchor.constraint(equalToConstant: 32).isActive = true
         item.view = group
-        let menuItem = NSMenuItem(title: "账号空间", action: #selector(showProfileSwitcher(_:)), keyEquivalent: "")
+        let menuItem = NSMenuItem(title: "Profiles", action: #selector(showProfileSwitcher(_:)), keyEquivalent: "")
         menuItem.target = self
         item.menuFormRepresentation = menuItem
         profileButton = button
@@ -337,31 +337,31 @@ extension BrowserWindowController {
         if let blockedNavigationStatus {
             setStatus(blockedNavigationStatus, showsProgress: false)
         } else if NetworkStatusMonitor.shared.availability == .offline {
-            setStatus("网络已断开", showsProgress: false)
+            setStatus("Network disconnected", showsProgress: false)
         } else if let lastFailureStatus {
             setStatus(lastFailureStatus, showsProgress: false)
         } else if isCloudflareChallengeActive {
-            let waiting = cloudflareChallengeLastReason.hasPrefix("等待超过")
-                ? "人机验证等待中，请保持当前网络和窗口不变"
-                : "正在完成人机验证…"
+            let waiting = cloudflareChallengeLastReason.hasPrefix("Waiting more than")
+                ? "Waiting for verification. Keep the current network and window unchanged"
+                : "Completing verification…"
             setStatus(waiting, showsProgress: false)
         } else if dataVerificationWindow != nil {
-            setStatus(dataVerificationWindow?.lastFailureStatus ?? "正在自动验证，完成后继续", showsProgress: false)
+            setStatus(dataVerificationWindow?.lastFailureStatus ?? "Verifying automatically. Will continue when complete", showsProgress: false)
         } else if dataVerificationReloadURL != nil || (dataLoadState.requiresVerification && isAssistantResponseInProgress) {
-            setStatus("等待回答结束后自动继续", showsProgress: false)
+            setStatus("Waiting for the reply to finish before continuing automatically", showsProgress: false)
         } else if dataVerificationAutoOpenWorkItem != nil {
-            setStatus("正在打开安全验证…", showsProgress: false)
+            setStatus("Opening security verification…", showsProgress: false)
         } else if dataLoadState.requiresVerification {
-            setStatus("需要完成安全验证，点击验证并重试", showsProgress: false)
+            setStatus("Security verification required. Click Verify and Retry", showsProgress: false)
         } else if dataLoadState.hasFailure {
-            setStatus("\(dataLoadState.summary)加载失败，点击重试", showsProgress: false)
+            setStatus("Could not load \(dataLoadState.summary). Click to retry", showsProgress: false)
         } else if modelLoadFailureActive {
-            setStatus("模型列表加载失败，点击导航栏重试", showsProgress: false)
+            setStatus("Model list failed to load. Click the navigation bar to retry", showsProgress: false)
         } else if webView.isLoading {
             let percent = max(1, min(99, Int(webView.estimatedProgress * 100)))
-            setStatus("加载中 \(percent)%", showsProgress: true)
+            setStatus("Loading \(percent)%", showsProgress: true)
         } else if lastRenderProbeWasBlank {
-            setStatus("页面空白，点击恢复", showsProgress: false)
+            setStatus("Page is blank. Click Recover", showsProgress: false)
         } else {
             let location = Self.statusLocationText(for: webView.url)
             // The normal state must never display the WebView zoom as if it were
@@ -383,7 +383,7 @@ extension BrowserWindowController {
         if let scheme = url?.scheme, !scheme.isEmpty {
             return "\(scheme.lowercased()):"
         }
-        return "未载入"
+        return "Not loaded"
     }
 
     func setStatus(_ text: String, showsProgress: Bool, quiet: Bool = false) {
@@ -455,9 +455,9 @@ extension BrowserWindowController {
 
     private func makeNavigationToolbarItem(identifier: NSToolbarItem.Identifier) -> NSToolbarItem {
         let item = NSToolbarItem(itemIdentifier: identifier)
-        item.label = "导航"
-        item.paletteLabel = "导航"
-        item.toolTip = "后退、前进、重新加载"
+        item.label = "Navigate"
+        item.paletteLabel = "Navigate"
+        item.toolTip = "Back, Forward, Reload"
         item.visibilityPriority = .high
         item.isNavigational = true
 
@@ -474,7 +474,7 @@ extension BrowserWindowController {
         ])
         stack.setAccessibilityElement(true)
         stack.setAccessibilityRole(.group)
-        stack.setAccessibilityLabel("导航")
+        stack.setAccessibilityLabel("Navigate")
 
         func makeButton(_ label: String, _ symbol: String, _ action: Selector) -> NSButton {
             let button = NSButton(title: "", target: self, action: action)
@@ -495,9 +495,9 @@ extension BrowserWindowController {
             return button
         }
 
-        let back = makeButton("后退", "chevron.backward", #selector(goBack(_:)))
-        let forward = makeButton("前进", "chevron.forward", #selector(goForward(_:)))
-        let reload = makeButton("重新加载", "arrow.clockwise", #selector(reload(_:)))
+        let back = makeButton("Back", "chevron.backward", #selector(goBack(_:)))
+        let forward = makeButton("Forward", "chevron.forward", #selector(goForward(_:)))
+        let reload = makeButton("Reload", "arrow.clockwise", #selector(reload(_:)))
         back.isEnabled = webView.canGoBack
         forward.isEnabled = webView.canGoForward
         navigationBackButton = back
@@ -520,7 +520,7 @@ extension BrowserWindowController {
         stack.addArrangedSubview(back)
         stack.addArrangedSubview(forward)
         stack.addArrangedSubview(reload)
-        let menu = NSMenu(title: "导航")
+        let menu = NSMenu(title: "Navigate")
         menu.autoenablesItems = false
         for button in [back, forward, reload] {
             let entry = NSMenuItem(title: button.toolTip ?? "", action: button.action, keyEquivalent: "")
@@ -528,7 +528,7 @@ extension BrowserWindowController {
             entry.isEnabled = button.isEnabled
             menu.addItem(entry)
         }
-        let menuItem = NSMenuItem(title: "导航", action: nil, keyEquivalent: "")
+        let menuItem = NSMenuItem(title: "Navigate", action: nil, keyEquivalent: "")
         menuItem.submenu = menu
         item.menuFormRepresentation = menuItem
         item.view = stack
@@ -602,8 +602,8 @@ extension BrowserWindowController {
         ])
 
         let item = NSToolbarItem(itemIdentifier: identifier)
-        item.label = "状态"
-        item.paletteLabel = "状态"
+        item.label = "Status"
+        item.paletteLabel = "Status"
         item.toolTip = label.stringValue
         item.view = container
         let menuItem = NSMenuItem(title: label.stringValue, action: nil, keyEquivalent: "")

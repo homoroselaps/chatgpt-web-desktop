@@ -53,7 +53,7 @@ final class DownloadCenter {
                 var result = record
                 if result.state == .downloading {
                     result.state = .failed
-                    result.errorMessage = "上次下载已中断，请回原页面重新下载"
+                    result.errorMessage = "The previous download was interrupted. Return to the original page to download again"
                 }
                 return result
             }

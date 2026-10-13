@@ -57,7 +57,7 @@ struct CompletionNotificationService {
             let trimmedContext = context.trimmingCharacters(in: .whitespacesAndNewlines)
             let request = CompletionNotificationRequest(
                 identifier: makeIdentifier(),
-                title: "ChatGPT 回复完成",
+                title: "ChatGPT Reply Complete",
                 body: trimmedContext.isEmpty ? "ChatGPT" : trimmedContext
             )
             scheduler.add(request) { error in

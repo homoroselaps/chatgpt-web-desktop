@@ -68,10 +68,10 @@ final class ToolbarLayoutTests: XCTestCase {
         XCTAssertNotEqual(controller.downloadButton?.title, "下载 0")
         XCTAssertTrue(controller.profileButton?.title.hasSuffix("▾") ?? false)
         XCTAssertEqual(controller.profileButton?.imagePosition, .imageLeading)
-        XCTAssertTrue(controller.downloadButton?.toolTip?.contains("下载中心") ?? false)
-        XCTAssertTrue(controller.profileButton?.toolTip?.contains("账号空间") ?? false)
-        XCTAssertTrue(controller.downloadButton?.accessibilityLabel()?.contains("下载中心") ?? false)
-        XCTAssertTrue(controller.profileButton?.accessibilityLabel()?.contains("账号空间") ?? false)
+        XCTAssertTrue(controller.downloadButton?.toolTip?.contains("Download Center") ?? false)
+        XCTAssertTrue(controller.profileButton?.toolTip?.contains("Profile") ?? false)
+        XCTAssertTrue(controller.downloadButton?.accessibilityLabel()?.contains("Download Center") ?? false)
+        XCTAssertTrue(controller.profileButton?.accessibilityLabel()?.contains("Profile") ?? false)
         // Keyboard focus: buttons remain focusable controls.
         XCTAssertNotNil(controller.downloadButton?.cell)
         XCTAssertNotNil(controller.profileButton?.cell)
@@ -204,7 +204,7 @@ final class ToolbarLayoutTests: XCTestCase {
                 XCTAssertGreaterThan(downloadRect.minX, frame.bounds.width / 2)
                 XCTAssertLessThan(accountRect.minX, frame.bounds.width / 2)
                 XCTAssertLessThanOrEqual(accountRect.maxX, downloadRect.minX)
-                XCTAssertLessThanOrEqual(account.bounds.width, 240)
+                XCTAssertLessThanOrEqual(account.alignmentRect(forFrame: account.frame).width, 240)
                 XCTAssertEqual(controller.window.titleVisibility, .hidden)
                 func descendants(_ view: NSView) -> [NSView] { [view] + view.subviews.flatMap(descendants) }
                 let navItem = try XCTUnwrap(toolbar.items.first { $0.itemIdentifier == .chatGPTNavigation })
@@ -254,7 +254,7 @@ final class ToolbarLayoutTests: XCTestCase {
         controller.window.makeKeyAndOrderFront(nil)
         for width in [480, 580] {
             controller.window.setContentSize(NSSize(width: width, height: 680))
-            controller.setStatus("加载中 99%", showsProgress: true)
+            controller.setStatus("Loading 99%", showsProgress: true)
             let ready = expectation(description: "quick toolbar layout")
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { ready.fulfill() }
             wait(for: [ready], timeout: 2)

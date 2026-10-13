@@ -82,7 +82,7 @@ final class DataLoadRecoveryTests: XCTestCase {
         waitUntil { controller.dataLoadState.failures.count == 4 }
         XCTAssertTrue(controller.modelLoadFailureActive)
         XCTAssertGreaterThan(controller.modelLoadFailureCount, 0)
-        XCTAssertTrue(controller.diagnosticsReport().contains("dataLoadFailures: 账户, 模型, 历史记录, 项目"))
+        XCTAssertTrue(controller.diagnosticsReport().contains("dataLoadFailures: Account, Models, History, Projects"))
         let report = try XCTUnwrap(try evaluate(BrowserWindowController.renderedContentProbeScript, in: controller) as? [String: Any])
         XCTAssertEqual(report["dataLoadFailure"] as? Bool, true)
 
@@ -122,7 +122,7 @@ final class DataLoadRecoveryTests: XCTestCase {
         XCTAssertEqual(samePromise as? Bool, true)
         waitUntil { controller.dataLoadState.requiresVerification }
         waitUntil { controller.dataVerificationWindow != nil }
-        XCTAssertNotEqual(controller.navigationReloadButton?.accessibilityLabel(), "完成安全验证并重试")
+        XCTAssertNotEqual(controller.navigationReloadButton?.accessibilityLabel(), "Complete Security Verification and Retry")
         try evaluate("window.__fixtureStatus=200;window.__fixtureChallenge=false;fetch('/backend-api/conversations');'requested'", in: controller)
         settle()
         XCTAssertTrue(controller.dataLoadState.requiresVerification)
@@ -137,7 +137,7 @@ final class DataLoadRecoveryTests: XCTestCase {
         try evaluate("window.__fixtureStatus=403;window.__fixtureChallenge=true;fetch('/backend-api/models');'requested'", in: controller)
         waitUntil { controller.dataLoadState.requiresVerification }
         let child = try XCTUnwrap(controller.dataVerificationWindow)
-        XCTAssertEqual(child.window.title, "完成 ChatGPT 安全验证")
+        XCTAssertEqual(child.window.title, "Complete ChatGPT Security Verification")
         XCTAssertFalse(child.window.isVisible)
         XCTAssertTrue(controller.diagnosticsReport().contains("dataVerificationPresentation: in-window"))
         XCTAssertTrue(child.webView.configuration.websiteDataStore === controller.webView.configuration.websiteDataStore)
@@ -185,6 +185,7 @@ final class DataLoadRecoveryTests: XCTestCase {
     func testVerificationUsesChallengedAccountEndpointAndRejectsOtherPaths() throws {
         let controller = makeController()
         defer { controller.dispose() }
+        controller.isAssistantResponseInProgress = true
         try evaluate("window.__fixtureStatus=403;window.__fixtureChallenge=true;fetch('/api/auth/session');'requested'", in: controller)
         waitUntil { controller.dataLoadState.requiresVerification }
         XCTAssertEqual(controller.dataLoadState.verificationPath, "/api/auth/session")
@@ -207,7 +208,7 @@ final class DataLoadRecoveryTests: XCTestCase {
         defer { controller.dispose() }
         let url = URL(string: "https://chatgpt.com/backend-api/accounts/check/v4-2026-10-05")!
         controller.dataVerificationURL = url
-        controller.dataLoadState.failures = ["账户"]
+        controller.dataLoadState.failures = ["Account"]
         let response = try XCTUnwrap(HTTPURLResponse(url: url, statusCode: 401, httpVersion: nil, headerFields: ["Content-Type":"application/json"]))
         var finished = false
         controller.dataVerificationCompleted = { finished = true }

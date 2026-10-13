@@ -42,7 +42,7 @@ final class BrowserNavigationNoticeIntegrationTests: XCTestCase {
 
         XCTAssertEqual(action.targetFrame?.isMainFrame, true)
         XCTAssertEqual(delegate.lastPolicy, .cancel)
-        let notice = "已阻止不支持的 notice-test: 链接"
+        let notice = "Blocked an unsupported notice-test: link"
         XCTAssertEqual(controller.blockedNavigationStatus, notice)
         controller.updateNativeChromeStatus()
         XCTAssertEqual(controller.statusLabel?.stringValue, notice)
@@ -71,7 +71,7 @@ final class BrowserNavigationNoticeIntegrationTests: XCTestCase {
         XCTAssertEqual(action.targetFrame?.isMainFrame, true)
         XCTAssertEqual(action.navigationType, .linkActivated)
         XCTAssertEqual(delegate.lastPolicy, .cancel)
-        XCTAssertEqual(controller.blockedNavigationStatus, "已阻止不支持的 notice-test: 链接")
+        XCTAssertEqual(controller.blockedNavigationStatus, "Blocked an unsupported notice-test: link")
     }
 
     func testMainFramePopupUsesSameSpecificNotice() throws {
@@ -88,7 +88,7 @@ final class BrowserNavigationNoticeIntegrationTests: XCTestCase {
         XCTAssertTrue(action.sourceFrame.isMainFrame)
         XCTAssertNotNil(controller.blockedNavigationStatus)
         XCTAssertTrue(controller.diagnosticsReport().contains("frame=new-window"))
-        XCTAssertEqual(controller.statusLabel?.stringValue, "已阻止不支持的 notice-test: 链接")
+        XCTAssertEqual(controller.statusLabel?.stringValue, "Blocked an unsupported notice-test: link")
     }
 
     func testMailtoUserClickOpensSystemHandlerWithoutBlockedNotice() throws {
@@ -138,9 +138,9 @@ final class BrowserNavigationNoticeIntegrationTests: XCTestCase {
         let (controller, delegate) = try makeHarness()
         defer { controller.window.close() }
         _ = try navigate("location.href = 'notice-test://example/one';", controller: controller, delegate: delegate)
-        controller.setStatus("页面加载失败", showsProgress: false)
+        controller.setStatus("Page Failed to Load", showsProgress: false)
         XCTAssertNil(controller.blockedNavigationStatus)
-        XCTAssertEqual(controller.statusLabel?.stringValue, "页面加载失败")
+        XCTAssertEqual(controller.statusLabel?.stringValue, "Page Failed to Load")
 
         _ = try navigate("location.href = 'notice-test://example/two';", controller: controller, delegate: delegate)
         XCTAssertNotNil(controller.blockedNavigationStatus)
@@ -170,7 +170,7 @@ final class BrowserNavigationNoticeIntegrationTests: XCTestCase {
         )
         XCTAssertTrue(action.targetFrame?.isMainFrame == true)
         XCTAssertEqual(delegate.lastPolicy, .cancel)
-        XCTAssertEqual(controller.blockedNavigationStatus, "已阻止含用户名或密码的链接")
+        XCTAssertEqual(controller.blockedNavigationStatus, "Blocked a link containing a username or password")
         let report = controller.diagnosticsReport()
         XCTAssertTrue(report.contains("reason=embeddedCredentials"))
         for secret in ["test-user", "test-password", "test-token", "test-secret"] {
@@ -179,7 +179,7 @@ final class BrowserNavigationNoticeIntegrationTests: XCTestCase {
 
         _ = try navigate("location.href = 'http://notice.test/';", controller: controller, delegate: delegate)
         XCTAssertEqual(delegate.lastPolicy, .cancel)
-        XCTAssertEqual(controller.blockedNavigationStatus, "已阻止未加密的 HTTP 链接")
+        XCTAssertEqual(controller.blockedNavigationStatus, "Blocked an unencrypted HTTP link")
     }
 
     private static let baseURL = URL(string: "https://notice.test/")!

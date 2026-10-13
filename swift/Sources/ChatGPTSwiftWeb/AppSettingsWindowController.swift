@@ -21,9 +21,9 @@ struct AppSettingsState {
     let updateStatus: String
     let distributionStatus: String
     var autoOpenFinderAfterDownload: Bool = false
-    var networkStatus: String = "未检查"
+    var networkStatus: String = "Not checked"
     var quickWindowEnabled: Bool = false
-    var quickWindowShortcut: String = "⌘⇧空格"
+    var quickWindowShortcut: String = "⌘⇧Space"
 
 }
 
@@ -58,15 +58,15 @@ final class AppSettingsWindowController: NSWindowController {
         var title: String {
             switch self {
             case .general:
-                return "通用"
+                return "General"
             case .quickWindow:
-                return "快速窗口"
+                return "Quick Window"
             case .privacy:
-                return "隐私"
+                return "Privacy"
             case .notes:
-                return "备忘录"
+                return "Notes"
             case .distribution:
-                return "分发"
+                return "Distribution"
             }
         }
     }
@@ -89,7 +89,7 @@ final class AppSettingsWindowController: NSWindowController {
             backing: .buffered,
             defer: false
         )
-        window.title = "设置"
+        window.title = "Settings"
         window.minSize = NSSize(width: 680, height: 500)
         window.isReleasedWhenClosed = false
         if #available(macOS 11.0, *) {
@@ -247,72 +247,72 @@ final class AppSettingsWindowController: NSWindowController {
     }
 
     private func renderGeneral() {
-        addHeader("通用", "当前窗口仍然只加载 chatgpt.com，原生层负责窗口、状态、隐私和系统集成。")
-        addKeyValue("版本", state.appVersion)
-        addKeyValue("当前账号空间", state.currentProfileName)
-        addKeyValue("启动默认空间", state.startupProfileName)
-        addKeyValue("当前空间首页", state.homepage)
+        addHeader("General", "This window loads chatgpt.com, with native window controls, status, privacy, and system integration.")
+        addKeyValue("Version", state.appVersion)
+        addKeyValue("Current Profile", state.currentProfileName)
+        addKeyValue("Startup Profile", state.startupProfileName)
+        addKeyValue("Profile Homepage", state.homepage)
         addToggle(
-            "在本机保留输入草稿",
-            detail: "后台保存最近输入，不显示聊天提示，不因收到回复而删除。需要时从“编辑”菜单恢复或清除。",
+            "Save Drafts Locally",
+            detail: "Saves recent input in the background and keeps it after replies. Restore or clear drafts from the Edit menu.",
             state: state.promptDraftRestoreEnabled,
             action: #selector(togglePromptDraftRestore(_:))
         )
-        addKeyValue("当前草稿", state.promptDraftSummary)
-        addActionButton("清除当前空间草稿", action: #selector(clearCurrentDraft(_:)))
+        addKeyValue("Current Draft", state.promptDraftSummary)
+        addActionButton("Clear Profile Drafts", action: #selector(clearCurrentDraft(_:)))
         addToggle(
-            "后台完成通知",
-            detail: "窗口不在前台时，如果网页状态显示 ChatGPT 回复完成，则发送 macOS 通知。",
+            "Background Completion Notifications",
+            detail: "Sends a macOS notification when ChatGPT finishes a reply while the window is in the background.",
             state: state.backgroundCompletionNotificationsEnabled,
             action: #selector(toggleBackgroundCompletionNotifications(_:))
         )
-        addToggle("下载完成后自动打开 Finder", detail: "默认关闭。完成后仅显示应用内提示，可在下载中心查看。", state: state.autoOpenFinderAfterDownload, action: #selector(toggleAutoOpenFinder(_:)))
-        addKeyValue("网络状态", state.networkStatus)
-        addKeyValue("通知权限", state.notificationPermissionStatus)
-        addKeyValue("数据隔离", state.profileIsolation)
-        addActionButton("打开诊断", action: #selector(showDiagnostics(_:)))
-        addActionButton("打开下载中心", action: #selector(showDownloads(_:)))
+        addToggle("Open Finder After Downloads", detail: "Off by default. Completed downloads appear in an in-app notification and the Download Center.", state: state.autoOpenFinderAfterDownload, action: #selector(toggleAutoOpenFinder(_:)))
+        addKeyValue("Network Status", state.networkStatus)
+        addKeyValue("Notification Permission", state.notificationPermissionStatus)
+        addKeyValue("Data Isolation", state.profileIsolation)
+        addActionButton("Open Diagnostics", action: #selector(showDiagnostics(_:)))
+        addActionButton("Open Download Center", action: #selector(showDownloads(_:)))
     }
 
     private func renderQuickWindow() {
-        addHeader("快速窗口", "默认关闭。启用后可用全局快捷键打开轻量输入窗口，直接输入、发送并阅读回复。")
-        addToggle("启用快速窗口", detail: "首次使用时加载页面，关闭后释放窗口；再次呼出沿用当前账号空间。", state: state.quickWindowEnabled, action: #selector(toggleQuickWindow(_:)))
+        addHeader("Quick Window", "Off by default. Use a global keyboard shortcut to open a compact window to write messages and read replies.")
+        addToggle("Enable Quick Window", detail: "Loads the page when opened and releases the window when closed. Uses the current profile each time.", state: state.quickWindowEnabled, action: #selector(toggleQuickWindow(_:)))
         let recorder = ShortcutRecorderButton(shortcut: QuickWindowPreferences.shortcut) { [weak self] shortcut in
             self?.callbacks.setQuickWindowShortcut(shortcut)
         }
         contentStack.addArrangedSubview(recorder)
-        addKeyValue("快捷键状态", QuickWindowHotKey.shared.statusText)
+        addKeyValue("Shortcut Status", QuickWindowHotKey.shared.statusText)
 
     }
 
     private func renderPrivacy() {
-        addHeader("隐私", "这些设置会立即写入本机偏好，并应用到窗口标题或当前空间的隐私行为。")
+        addHeader("Privacy", "Changes are saved immediately and apply to window titles or privacy settings for the current profile.")
         addWindowTitleDisplayOptions()
         addToggle(
-            "WebRTC 防护",
-            detail: "关闭 WebRTC 构造器暴露；会重建当前 WebView 才能完整生效。",
+            "WebRTC Protection",
+            detail: "Blocks WebRTC constructors. Recreates the current WebView to apply the change fully.",
             state: state.webRTCProtectionEnabled,
             action: #selector(toggleWebRTC(_:))
         )
         addToggle(
-            "默认拒绝 ChatGPT 非必要 Cookie",
-            detail: "默认开启。为每个隔离空间预置 ChatGPT 官方 Consent Cookie 的拒绝值，保留登录、安全和功能所需 Cookie；关闭时只清理本 App 预置的四个 Consent Cookie，随后可在网页 Cookie Preferences 中自行选择。",
+            "Reject Nonessential ChatGPT Cookies by Default",
+            detail: "On by default. Sets ChatGPT consent cookies to reject nonessential cookies in each profile, preserving login, security, and functional cookies. Turning this off removes only the four consent cookies set by this app. You can then choose in the webpage's Cookie Preferences.",
             state: state.rejectNonEssentialCookiesEnabled,
             action: #selector(toggleRejectNonEssentialCookies(_:))
         )
         addToggle(
-            "第三方链接在 App 内打开",
-            detail: "关闭后，用户点击的非 OpenAI 链接会交给系统浏览器。",
+            "Open Third-Party Links in App",
+            detail: "When off, non-OpenAI links open in your default browser.",
             state: state.keepThirdPartyLinksInApp,
             action: #selector(toggleThirdPartyLinks(_:))
         )
         addToggle(
-            "增强隐私模式（当前空间）",
-            detail: "开启 GPC、追踪参数清理、Referrer 降级等当前空间策略。",
+            "Enhanced Privacy (Current Profile)",
+            detail: "Enables GPC, tracking parameter removal, and reduced referrer information for this profile.",
             state: state.enhancedPrivacyEnabled,
             action: #selector(toggleEnhancedPrivacy(_:))
         )
-        addKeyValue("指纹预设", state.fingerprintName)
+        addKeyValue("Fingerprint Preset", state.fingerprintName)
     }
 
     private func addWindowTitleDisplayOptions() {
@@ -322,7 +322,7 @@ final class AppSettingsWindowController: NSWindowController {
         stack.spacing = 5
         stack.translatesAutoresizingMaskIntoConstraints = false
 
-        let titleLabel = NSTextField(labelWithString: "窗口标题显示")
+        let titleLabel = NSTextField(labelWithString: "Window Title")
         titleLabel.font = .systemFont(ofSize: 13, weight: .medium)
         titleLabel.textColor = .labelColor
         stack.addArrangedSubview(titleLabel)
@@ -340,7 +340,7 @@ final class AppSettingsWindowController: NSWindowController {
         }
 
         let detailLabel = wrappingLabel(
-            "默认不显示账号信息。Profile 名称模式会把纯邮箱自动缩短为 @ 前面的部分，但该部分仍可能包含姓名或手机号。",
+            "Account details are hidden by default. Profile Name shortens email addresses to the part before @, which may still contain a name or phone number.",
             color: .secondaryLabelColor
         )
         detailLabel.font = .systemFont(ofSize: 12, weight: .regular)
@@ -351,31 +351,31 @@ final class AppSettingsWindowController: NSWindowController {
     private static func windowTitleOptionLabel(_ mode: WindowTitleDisplayMode) -> String {
         switch mode {
         case .appNameOnly:
-            return "仅显示 ChatGPT Swift"
+            return "ChatGPT Swift Only"
         case .profileName:
-            return "显示 Profile 名称"
+            return "Profile Name"
         case .fullProfileName:
-            return "显示完整邮箱"
+            return "Full Email Address"
         }
     }
 
     private func renderNotes() {
-        addHeader("备忘录", "读取 Apple Notes 列表中当前选中的第一条备忘录标题和正文（超长内容会截断），并插入网页输入框；不会自动发送，也不读取 IDE、Terminal 或代码工程。")
-        addKeyValue("自动化权限", state.notesAutomationStatus)
-        addActionButton("打开系统自动化设置", action: #selector(openNotesAutomationPrivacy(_:)))
+        addHeader("Notes", "Inserts the title and body of the first selected Apple Note into the webpage's input box. Long notes are truncated. It does not send the message automatically or read IDEs, Terminal, or code projects.")
+        addKeyValue("Automation Permission", state.notesAutomationStatus)
+        addActionButton("Open Automation Settings", action: #selector(openNotesAutomationPrivacy(_:)))
     }
 
     private func renderDistribution() {
-        addHeader("分发", "本地统一自签名适合本机安装和 GitHub Releases 手动检查；跨设备 Sparkle 自动更新需要稳定、受系统信任的 Developer ID 签名与 EdDSA appcast。")
-        addKeyValue("更新状态", state.updateStatus)
-        addKeyValue("签名策略", state.distributionStatus)
+        addHeader("Distribution", "Local self-signing supports installation on this Mac and manual GitHub Release checks. Sparkle updates across devices require a stable, trusted Developer ID signature and an EdDSA appcast.")
+        addKeyValue("Update Status", state.updateStatus)
+        addKeyValue("Signing Policy", state.distributionStatus)
         let buttonRow = NSStackView()
         buttonRow.orientation = .horizontal
         buttonRow.alignment = .centerY
         buttonRow.spacing = 10
         buttonRow.translatesAutoresizingMaskIntoConstraints = false
-        buttonRow.addArrangedSubview(makeButton("检查更新", action: #selector(checkForUpdates(_:))))
-        buttonRow.addArrangedSubview(makeButton("打开发行页", action: #selector(openReleasePage(_:))))
+        buttonRow.addArrangedSubview(makeButton("Check for Updates", action: #selector(checkForUpdates(_:))))
+        buttonRow.addArrangedSubview(makeButton("Open Release Page", action: #selector(openReleasePage(_:))))
         contentStack.addArrangedSubview(buttonRow)
     }
 

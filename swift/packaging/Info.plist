@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>zh_CN</string>
+	<string>en</string>
 	<key>CFBundleDisplayName</key>
 	<string>ChatGPT Swift</string>
 	<key>CFBundleExecutable</key>
@@ -36,13 +36,13 @@
 	<key>LSMultipleInstancesProhibited</key>
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>用于读取你在 Apple Notes 列表中当前选中的第一条备忘录标题和完整正文，并插入到 ChatGPT 输入框作为上下文；不会自动发送。</string>
+	<string>Reads the title and body of the first selected Apple Note and inserts them into ChatGPT as context. It does not send the message automatically.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>ChatGPT 需要摄像头权限时，用于网页内的视频或多模态输入。</string>
+	<string>Allows ChatGPT to use the camera for video or multimodal input on the webpage.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>ChatGPT 需要麦克风权限时，用于网页内语音输入。</string>
+	<string>Allows ChatGPT to use the microphone for voice input on the webpage.</string>
 	<key>NSDownloadsFolderUsageDescription</key>
-	<string>保存 ChatGPT 网页生成或下载的文件到下载文件夹。</string>
+	<string>Saves files generated or downloaded from ChatGPT to your Downloads folder.</string>
 	<key>NSSupportsAutomaticTermination</key>
 	<false/>
 	<key>NSSupportsSuddenTermination</key>

@@ -3,8 +3,8 @@ import AppKit
 final class TransientToastView: NSVisualEffectView {
     private let messageLabel = NSTextField(wrappingLabelWithString: "")
     private let actionButton = NSButton(title: "", target: nil, action: nil)
-    private let copyButton = NSButton(title: "复制诊断信息", target: nil, action: nil)
-    private let dismissButton = NSButton(title: "关闭", target: nil, action: nil)
+    private let copyButton = NSButton(title: "Copy Diagnostics", target: nil, action: nil)
+    private let dismissButton = NSButton(title: "Close", target: nil, action: nil)
     private var dismissWorkItem: DispatchWorkItem?
     private var action: (() -> Void)?
     var onDismiss: (() -> Void)?
@@ -61,8 +61,8 @@ final class TransientToastView: NSVisualEffectView {
         messageLabel.stringValue = message
         actionButton.title = actionTitle ?? ""
         actionButton.isHidden = actionTitle == nil
-        copyButton.isHidden = actionTitle == nil || actionTitle == "复制诊断信息"
-        dismissButton.setAccessibilityLabel("关闭提示")
+        copyButton.isHidden = actionTitle == nil || actionTitle == "Copy Diagnostics"
+        dismissButton.setAccessibilityLabel("Dismiss Notification")
         self.action = action
         setAccessibilityLabel(message)
         isHidden = false
@@ -92,7 +92,7 @@ final class TransientToastView: NSVisualEffectView {
     @objc private func copyDiagnostics() {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(messageLabel.stringValue, forType: .string)
-        copyButton.title = "已复制"
+        copyButton.title = "Copied"
     }
 
     @objc private func dismissToast() { dismiss() }

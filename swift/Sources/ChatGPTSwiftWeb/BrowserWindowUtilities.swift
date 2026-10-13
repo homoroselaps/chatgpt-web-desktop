@@ -52,22 +52,22 @@ extension BrowserWindowController {
         let toolTip: String
         if !active.isEmpty {
             title = active.count > 99 ? "99+" : "\(active.count)"
-            accessibility = "下载中心，\(active.count) 项正在下载\(percent)"
-            toolTip = "打开下载中心（\(active.count) 项正在下载\(percent)）"
+            accessibility = "Download Center, \(active.count) active downloads\(percent)"
+            toolTip = "Open Download Center (\(active.count) active downloads\(percent))"
         } else if !records.isEmpty {
             title = "\(records.count)"
-            accessibility = "下载中心，\(records.count) 项记录"
-            toolTip = "打开下载中心（\(records.count) 项记录）"
+            accessibility = "Download Center, \(records.count) records"
+            toolTip = "Open Download Center (\(records.count) records)"
         } else {
             title = ""
-            accessibility = "下载中心，无记录"
-            toolTip = "打开下载中心"
+            accessibility = "Download Center, no records"
+            toolTip = "Open Download Center"
         }
         downloadButton?.title = title
         downloadButton?.imagePosition = title.isEmpty ? .imageOnly : .imageLeading
         downloadButton?.setAccessibilityLabel(accessibility)
         downloadButton?.toolTip = toolTip
-        toolbarItems[.chatGPTDownloads]?.label = "下载中心"
+        toolbarItems[.chatGPTDownloads]?.label = "Download Center"
         toolbarItems[.chatGPTDownloads]?.toolTip = toolTip
         toolbarItems[.chatGPTDownloads]?.menuFormRepresentation?.title = toolTip
     }
@@ -75,21 +75,21 @@ extension BrowserWindowController {
     func updateProfileButton() {
         let currentID = profileID ?? defaultProfileID
         let name = persistent ? (ProfileStore.loadProfiles().first(where: { $0.id == currentID })?.name
-            ?? (currentID == defaultProfileID ? "默认" : "账号空间")) : "无痕"
+            ?? (currentID == defaultProfileID ? "Default" : "Profiles")) : "Private"
         let formatted = ProfileWindowTitle.format(profileName: name, isDefault: persistent && currentID == defaultProfileID,
                                                  mode: WindowTitleSettings.mode())
         let prefix = "ChatGPT Swift — "
         let displayName = formatted.hasPrefix(prefix) ? String(formatted.dropFirst(prefix.count)) : ""
         profileButton?.title = displayName.isEmpty ? "▾" : displayName + "  ▾"
         profileButton?.imagePosition = .imageLeading
-        profileButton?.image = NSImage(systemSymbolName: "person.crop.circle", accessibilityDescription: "账号空间")
+        profileButton?.image = NSImage(systemSymbolName: "person.crop.circle", accessibilityDescription: "Profiles")
         profileButton?.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: profileButton?.font?.pointSize ?? 13, weight: .regular)
-        let toolTip = "账号空间：\(name) — 点击切换"
-        let accessibility = "账号空间，当前\(name)，点击切换账号空间"
+        let toolTip = "Profile: \(name) — Click to Switch"
+        let accessibility = "Profile, currently \(name), click to switch profiles"
         profileButton?.toolTip = toolTip
         profileButton?.setAccessibilityLabel(accessibility)
-        toolbarItems[.chatGPTProfile]?.label = "账号空间"
-        toolbarItems[.chatGPTProfile]?.paletteLabel = "账号空间"
+        toolbarItems[.chatGPTProfile]?.label = "Profiles"
+        toolbarItems[.chatGPTProfile]?.paletteLabel = "Profiles"
         toolbarItems[.chatGPTProfile]?.toolTip = toolTip
         toolbarItems[.chatGPTProfile]?.menuFormRepresentation?.title = toolTip
     }
@@ -107,20 +107,20 @@ extension BrowserWindowController {
            !isAssistantResponseInProgress, ProfileStore.pendingDataMutation == nil {
             networkRetryUsed = true
             networkRetryPending = false
-            showToast("网络已恢复，正在重新加载")
+            showToast("Network restored. Reloading")
             hardReload()
         }
         updateNativeChromeStatus()
     }
 
     @objc func showProfileSwitcher(_ sender: Any?) {
-        guard persistent else { showToast("无痕窗口使用独立的临时空间"); return }
-        let menu = NSMenu(title: "账号空间")
+        guard persistent else { showToast("Private windows use a separate temporary profile"); return }
+        let menu = NSMenu(title: "Profiles")
         let currentID = profileID ?? defaultProfileID
         let startupID = ProfileStore.startupProfileID()
         for profile in ProfileStore.loadProfiles() {
-            let badges = [profile.id == currentID ? "当前" : nil, profile.id == startupID ? "启动默认" : nil].compactMap { $0 }
-            let item = NSMenuItem(title: profile.name + (badges.isEmpty ? "" : "（\(badges.joined(separator: "、"))）"),
+            let badges = [profile.id == currentID ? "Current" : nil, profile.id == startupID ? "Startup Default" : nil].compactMap { $0 }
+            let item = NSMenuItem(title: profile.name + (badges.isEmpty ? "" : " (\(badges.joined(separator: ", ")))"),
                                  action: #selector(AppDelegate.switchToProfile(_:)), keyEquivalent: "")
             item.target = NSApp.delegate
             item.representedObject = profile.id
@@ -129,7 +129,7 @@ extension BrowserWindowController {
             menu.addItem(item)
         }
         menu.addItem(.separator())
-        let manage = NSMenuItem(title: "账号空间管理在“文件”菜单中", action: nil, keyEquivalent: "")
+        let manage = NSMenuItem(title: "Manage profiles in the File menu", action: nil, keyEquivalent: "")
         manage.isEnabled = false
         menu.addItem(manage)
         if let button = profileButton, button.window != nil {

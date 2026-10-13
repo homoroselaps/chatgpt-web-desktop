@@ -19,16 +19,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
     private var enhancedPrivacyItem: NSMenuItem?
     private var settingsWindowController: AppSettingsWindowController?
     private var diagnosticsWindowController: DiagnosticsWindowController?
-    private var updateCheckStatus = "未检查；未配置 Sparkle 时会回退到 GitHub Releases 检查。"
+    private var updateCheckStatus = "Not checked. Falls back to GitHub Releases when Sparkle is not configured."
     private var didFinishLaunchingAt: Date?
-    private var previousRunSummary = "未记录"
-    private var notificationPermissionStatus = "未检查"
+    private var previousRunSummary = "Not recorded"
+    private var notificationPermissionStatus = "Not checked"
     private let performanceMonitor = ProcessPerformanceMonitor()
     private let completionNotificationService = CompletionNotificationService(
         scheduler: SystemCompletionNotificationScheduler()
     )
     private var sparkleUpdaterController: SPUStandardUpdaterController?
-    private var sparkleStatus = "未启用：Info.plist 未提供 SUFeedURL / SUPublicEDKey"
+    private var sparkleStatus = "Disabled: Info.plist has no SUFeedURL / SUPublicEDKey"
     private(set) var profileMutationInProgress = false
     private var profileSwitchInProgress = false
     private var cookieConsentMutationGeneration = 0
@@ -73,7 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
             initialURL: smokeTestRun
                 ? chatGPTURL
                 : (pendingMutation ? nil : ProfileStore.homepageURL(for: profile?.id ?? defaultProfileID)),
-            title: profile.map(mainWindowTitle(for:)) ?? (pendingMutation ? "正在恢复空间数据…" : "ChatGPT Swift Smoke Test"),
+            title: profile.map(mainWindowTitle(for:)) ?? (pendingMutation ? "Recovering profile data…" : "ChatGPT Swift Smoke Test"),
             isPopup: false,
             persistent: !smokeTestRun && !pendingMutation,
             profileID: profile?.id
@@ -176,14 +176,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
                             ProfileStore.clearPendingDataMutation()
                             self.profileMutationInProgress = false
                             self.rebuildMainController()
-                            self.presentError("上次空间删除未完成，已保留空间配置：\(error.localizedDescription)")
+                            self.presentError("The previous profile deletion did not finish. Profile settings were preserved: \(error.localizedDescription)")
                             return
                         }
                         self.finalizeProfileDeletion(profileID: profileID)
                         ProfileStore.clearPendingDataMutation()
                         self.profileMutationInProgress = false
                         self.applyCurrentCookiePreferenceAfterMutation()
-                        self.presentInfo("已完成上次中断的空间删除。")
+                        self.presentInfo("Completed the previously interrupted profile deletion.")
                     }
                 }
             }
@@ -204,7 +204,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
                     self.applyCurrentCookiePreferenceAfterMutation()
                     self.profilesMenu.map(self.rebuildProfilesMenu(_:))
                     self.rebuildMainController()
-                    self.presentInfo("已完成上次中断的内置空间重建。")
+                    self.presentInfo("Completed the previously interrupted built-in profile reset.")
                 }
             }
         }
@@ -241,7 +241,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
                     self.profileMutationInProgress = false
                     self.applyCurrentCookiePreferenceAfterMutation()
                     self.rebuildMainController()
-                    self.presentInfo("已完成上次中断的空间清理。")
+                    self.presentInfo("Completed the previously interrupted profile cleanup.")
                 }
             }
         }
@@ -249,10 +249,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
 
     private func presentIsolationFallbackNotice() {
         let alert = NSAlert()
-        alert.messageText = "已回退到默认账号空间"
-        alert.informativeText = "多账号隔离需要 macOS 14 或更新版本。当前系统版本不支持隔离，已自动切回内置空间，避免不同空间共享同一份本地数据。\n\n要使用独立账号空间，请升级到 macOS 14 或更新版本。"
+        alert.messageText = "Returned to Default Profile"
+        alert.informativeText = "Multiple isolated profiles require macOS 14 or later. This system does not support isolation, so the app switched to the built-in profile to prevent profiles from sharing local data.\n\nUpgrade to macOS 14 or later to use isolated profiles."
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "知道了")
+        alert.addButton(withTitle: "OK")
         alert.runModal()
     }
 
@@ -290,14 +290,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         let clean = defaults.bool(forKey: lastRunCleanExitDefaultsKey)
 
         guard let started else {
-            previousRunSummary = "首次运行或无历史记录"
+            previousRunSummary = "First run or no history"
             return
         }
 
         if hadCleanFlag, clean {
-            previousRunSummary = "干净退出；开始 \(Self.timestampString(started))，结束 \(ended.map(Self.timestampString) ?? "未知")"
+            previousRunSummary = "Clean exit; started \(Self.timestampString(started)), ended \(ended.map(Self.timestampString) ?? "Unknown")"
         } else {
-            previousRunSummary = "可能非正常退出；上次开始 \(Self.timestampString(started))"
+            previousRunSummary = "Possible unexpected exit; last started \(Self.timestampString(started))"
         }
     }
 
@@ -332,24 +332,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
     private static func notificationStatusText(_ status: UNAuthorizationStatus) -> String {
         switch status {
         case .notDetermined:
-            return "未请求"
+            return "Not requested"
         case .denied:
-            return "已拒绝"
+            return "Denied"
         case .authorized:
-            return "已授权"
+            return "Authorized"
         case .provisional:
-            return "临时授权"
+            return "Provisional authorization"
         case .ephemeral:
-            return "临时会话授权"
+            return "Ephemeral authorization"
         @unknown default:
-            return "未知"
+            return "Unknown"
         }
     }
 
     private func configureSparkleUpdaterIfAvailable() {
         guard Self.hasSparkleConfiguration() else {
             sparkleUpdaterController = nil
-            sparkleStatus = "未启用：Info.plist 未提供 SUFeedURL / SUPublicEDKey"
+            sparkleStatus = "Disabled: Info.plist has no SUFeedURL / SUPublicEDKey"
             return
         }
 
@@ -359,7 +359,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
             userDriverDelegate: nil
         )
         sparkleUpdaterController = controller
-        sparkleStatus = "已启用：Sparkle 自动检查按自身调度执行"
+        sparkleStatus = "Enabled: Sparkle checks automatically on its own schedule"
     }
 
     private static func hasSparkleConfiguration() -> Bool {
@@ -401,17 +401,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
     private static func notificationStatusText(_ status: CompletionNotificationAuthorization) -> String {
         switch status {
         case .notDetermined:
-            return "未请求"
+            return "Not requested"
         case .denied:
-            return "已拒绝"
+            return "Denied"
         case .authorized:
-            return "已授权"
+            return "Authorized"
         case .provisional:
-            return "临时授权"
+            return "Provisional authorization"
         case .ephemeral:
-            return "临时会话授权"
+            return "Ephemeral authorization"
         case .unknown:
-            return "未知"
+            return "Unknown"
         }
     }
 
@@ -420,104 +420,104 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
 
         let appItem = NSMenuItem()
         let appMenu = NSMenu()
-        appMenu.addItem(withTitle: "关于 ChatGPT Swift", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        appMenu.addItem(withTitle: "About ChatGPT Swift", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         appMenu.addItem(NSMenuItem.separator())
-        let settingsItem = appMenu.addItem(withTitle: "设置…", action: #selector(openAppSettingsAction(_:)), keyEquivalent: ",")
+        let settingsItem = appMenu.addItem(withTitle: "Settings…", action: #selector(openAppSettingsAction(_:)), keyEquivalent: ",")
         settingsItem.target = self
-        let updateItem = appMenu.addItem(withTitle: "检查更新…", action: #selector(checkForUpdatesAction(_:)), keyEquivalent: "")
+        let updateItem = appMenu.addItem(withTitle: "Check for Updates…", action: #selector(checkForUpdatesAction(_:)), keyEquivalent: "")
         updateItem.target = self
         appMenu.addItem(NSMenuItem.separator())
-        appMenu.addItem(withTitle: "退出 ChatGPT Swift", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appMenu.addItem(withTitle: "Quit ChatGPT Swift", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appItem.submenu = appMenu
         mainMenu.addItem(appItem)
 
         let fileItem = NSMenuItem()
-        let fileMenu = NSMenu(title: "文件")
-        let importCookiesItem = fileMenu.addItem(withTitle: "导入 Cookies...", action: #selector(importCookiesMenu(_:)), keyEquivalent: "")
+        let fileMenu = NSMenu(title: "File")
+        let importCookiesItem = fileMenu.addItem(withTitle: "Import Cookies...", action: #selector(importCookiesMenu(_:)), keyEquivalent: "")
         importCookiesItem.target = self
-        let pasteCookiesItem = fileMenu.addItem(withTitle: "粘贴 Cookies...", action: #selector(pasteCookiesMenu(_:)), keyEquivalent: "")
+        let pasteCookiesItem = fileMenu.addItem(withTitle: "Paste Cookies...", action: #selector(pasteCookiesMenu(_:)), keyEquivalent: "")
         pasteCookiesItem.target = self
-        let exportCookiesItem = fileMenu.addItem(withTitle: "导出 Cookies...", action: #selector(exportCookiesMenu(_:)), keyEquivalent: "")
+        let exportCookiesItem = fileMenu.addItem(withTitle: "Export Cookies...", action: #selector(exportCookiesMenu(_:)), keyEquivalent: "")
         exportCookiesItem.target = self
-        let clearWebsiteDataItem = fileMenu.addItem(withTitle: "焚烧当前空间...", action: #selector(burnCurrentProfileData(_:)), keyEquivalent: "")
+        let clearWebsiteDataItem = fileMenu.addItem(withTitle: "Clear Current Profile Data...", action: #selector(burnCurrentProfileData(_:)), keyEquivalent: "")
         clearWebsiteDataItem.target = self
         fileMenu.addItem(NSMenuItem.separator())
-        let goToURLItem = fileMenu.addItem(withTitle: "前往网址...", action: #selector(goToURLAction(_:)), keyEquivalent: "l")
+        let goToURLItem = fileMenu.addItem(withTitle: "Go to URL...", action: #selector(goToURLAction(_:)), keyEquivalent: "l")
         goToURLItem.target = self
         fileMenu.addItem(NSMenuItem.separator())
-        let profilesItem = fileMenu.addItem(withTitle: "账号空间", action: nil, keyEquivalent: "")
-        let profilesSubmenu = NSMenu(title: "账号空间")
+        let profilesItem = fileMenu.addItem(withTitle: "Profiles", action: nil, keyEquivalent: "")
+        let profilesSubmenu = NSMenu(title: "Profiles")
         profilesSubmenu.delegate = self
         profilesSubmenu.autoenablesItems = false
         profilesItem.submenu = profilesSubmenu
         profilesMenu = profilesSubmenu
-        let incognitoItem = fileMenu.addItem(withTitle: "新建无痕窗口", action: #selector(openIncognitoWindow(_:)), keyEquivalent: "n")
+        let incognitoItem = fileMenu.addItem(withTitle: "New Private Window", action: #selector(openIncognitoWindow(_:)), keyEquivalent: "n")
         incognitoItem.keyEquivalentModifierMask = [.command, .shift]
         incognitoItem.target = self
         fileMenu.addItem(NSMenuItem.separator())
-        fileMenu.addItem(withTitle: "关闭窗口", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        fileMenu.addItem(withTitle: "Close Window", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
         fileItem.submenu = fileMenu
         mainMenu.addItem(fileItem)
 
         let editItem = NSMenuItem()
-        let editMenu = NSMenu(title: "编辑")
-        editMenu.addItem(withTitle: "撤销", action: Selector(("undo:")), keyEquivalent: "z")
-        editMenu.addItem(withTitle: "重做", action: Selector(("redo:")), keyEquivalent: "Z")
+        let editMenu = NSMenu(title: "Edit")
+        editMenu.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
+        editMenu.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: "Z")
         editMenu.addItem(NSMenuItem.separator())
-        editMenu.addItem(withTitle: "剪切", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
-        editMenu.addItem(withTitle: "复制", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-        editMenu.addItem(withTitle: "粘贴", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
-        editMenu.addItem(withTitle: "全选", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         editMenu.addItem(NSMenuItem.separator())
-        let restoreDraftItem = editMenu.addItem(withTitle: "恢复本页保存的草稿", action: #selector(restoreSavedDraftAction(_:)), keyEquivalent: "")
+        let restoreDraftItem = editMenu.addItem(withTitle: "Restore Saved Draft for This Page", action: #selector(restoreSavedDraftAction(_:)), keyEquivalent: "")
         restoreDraftItem.target = self
-        let clearDraftItem = editMenu.addItem(withTitle: "清除当前空间本机草稿", action: #selector(clearSavedDraftAction(_:)), keyEquivalent: "")
+        let clearDraftItem = editMenu.addItem(withTitle: "Clear Local Drafts for Current Profile", action: #selector(clearSavedDraftAction(_:)), keyEquivalent: "")
         clearDraftItem.target = self
         editMenu.addItem(.separator())
-        let notesContextItem = editMenu.addItem(withTitle: "插入选中备忘录正文", action: #selector(insertNotesContextAction(_:)), keyEquivalent: "")
+        let notesContextItem = editMenu.addItem(withTitle: "Insert Selected Note", action: #selector(insertNotesContextAction(_:)), keyEquivalent: "")
         notesContextItem.target = self
         editItem.submenu = editMenu
         mainMenu.addItem(editItem)
 
         let navigationItem = NSMenuItem()
-        let navigationMenu = NSMenu(title: "导航")
-        let focusPromptItem = navigationMenu.addItem(withTitle: "聚焦输入框", action: #selector(focusPromptAction(_:)), keyEquivalent: "i")
+        let navigationMenu = NSMenu(title: "Navigate")
+        let focusPromptItem = navigationMenu.addItem(withTitle: "Focus Input", action: #selector(focusPromptAction(_:)), keyEquivalent: "i")
         focusPromptItem.keyEquivalentModifierMask = [.command, .option]
         focusPromptItem.target = self
         navigationMenu.addItem(NSMenuItem.separator())
-        let backItem = navigationMenu.addItem(withTitle: "后退", action: #selector(goBackAction(_:)), keyEquivalent: "[")
+        let backItem = navigationMenu.addItem(withTitle: "Back", action: #selector(goBackAction(_:)), keyEquivalent: "[")
         backItem.target = self
-        let forwardItem = navigationMenu.addItem(withTitle: "前进", action: #selector(goForwardAction(_:)), keyEquivalent: "]")
+        let forwardItem = navigationMenu.addItem(withTitle: "Forward", action: #selector(goForwardAction(_:)), keyEquivalent: "]")
         forwardItem.target = self
-        let homeItem = navigationMenu.addItem(withTitle: "回到主页", action: #selector(goHomeAction(_:)), keyEquivalent: "h")
+        let homeItem = navigationMenu.addItem(withTitle: "Home", action: #selector(goHomeAction(_:)), keyEquivalent: "h")
         homeItem.keyEquivalentModifierMask = [.command, .shift]
         homeItem.target = self
         navigationMenu.addItem(NSMenuItem.separator())
-        let reloadItem = navigationMenu.addItem(withTitle: "重新加载", action: #selector(reloadAction(_:)), keyEquivalent: "r")
+        let reloadItem = navigationMenu.addItem(withTitle: "Reload", action: #selector(reloadAction(_:)), keyEquivalent: "r")
         reloadItem.target = self
         navigationMenu.addItem(NSMenuItem.separator())
-        let openInBrowserItem = navigationMenu.addItem(withTitle: "在系统浏览器打开", action: #selector(openCurrentURLInBrowserAction(_:)), keyEquivalent: "o")
+        let openInBrowserItem = navigationMenu.addItem(withTitle: "Open in Default Browser", action: #selector(openCurrentURLInBrowserAction(_:)), keyEquivalent: "o")
         openInBrowserItem.keyEquivalentModifierMask = [.command, .option]
         openInBrowserItem.target = self
-        let copyURLItem = navigationMenu.addItem(withTitle: "复制当前页链接", action: #selector(copyCurrentURLAction(_:)), keyEquivalent: "c")
+        let copyURLItem = navigationMenu.addItem(withTitle: "Copy Page Link", action: #selector(copyCurrentURLAction(_:)), keyEquivalent: "c")
         copyURLItem.keyEquivalentModifierMask = [.command, .shift]
         copyURLItem.target = self
         navigationItem.submenu = navigationMenu
         mainMenu.addItem(navigationItem)
 
         let viewItem = NSMenuItem()
-        let viewMenu = NSMenu(title: "视图")
-        let zoomInItem = viewMenu.addItem(withTitle: "放大", action: #selector(zoomInAction(_:)), keyEquivalent: "=")
+        let viewMenu = NSMenu(title: "View")
+        let zoomInItem = viewMenu.addItem(withTitle: "Zoom In", action: #selector(zoomInAction(_:)), keyEquivalent: "=")
         zoomInItem.target = self
-        let zoomOutItem = viewMenu.addItem(withTitle: "缩小", action: #selector(zoomOutAction(_:)), keyEquivalent: "-")
+        let zoomOutItem = viewMenu.addItem(withTitle: "Zoom Out", action: #selector(zoomOutAction(_:)), keyEquivalent: "-")
         zoomOutItem.target = self
-        let resetZoomItem = viewMenu.addItem(withTitle: "实际大小", action: #selector(resetZoomAction(_:)), keyEquivalent: "0")
+        let resetZoomItem = viewMenu.addItem(withTitle: "Actual Size", action: #selector(resetZoomAction(_:)), keyEquivalent: "0")
         resetZoomItem.target = self
         viewItem.submenu = viewMenu
         mainMenu.addItem(viewItem)
 
         let privacyItem = NSMenuItem()
-        let privacyMenu = NSMenu(title: "隐私")
+        let privacyMenu = NSMenu(title: "Privacy")
         privacyMenu.delegate = self
         privacyMenu.autoenablesItems = false
         rebuildPrivacyMenu(privacyMenu)
@@ -526,20 +526,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         mainMenu.addItem(privacyItem)
 
         let windowItem = NSMenuItem()
-        let windowMenu = NSMenu(title: "窗口")
-        let quickItem = windowMenu.addItem(withTitle: "快速窗口", action: #selector(showQuickWindow(_:)), keyEquivalent: "")
+        let windowMenu = NSMenu(title: "Window")
+        let quickItem = windowMenu.addItem(withTitle: "Quick Window", action: #selector(showQuickWindow(_:)), keyEquivalent: "")
         quickItem.target = self
-        windowMenu.addItem(withTitle: "最小化", action: #selector(NSWindow.miniaturize(_:)), keyEquivalent: "m")
-        windowMenu.addItem(withTitle: "缩放", action: #selector(NSWindow.zoom(_:)), keyEquivalent: "")
+        windowMenu.addItem(withTitle: "Minimize", action: #selector(NSWindow.miniaturize(_:)), keyEquivalent: "m")
+        windowMenu.addItem(withTitle: "Zoom", action: #selector(NSWindow.zoom(_:)), keyEquivalent: "")
         windowItem.submenu = windowMenu
         mainMenu.addItem(windowItem)
         NSApp.windowsMenu = windowMenu
 
         let helpItem = NSMenuItem()
-        let helpMenu = NSMenu(title: "帮助")
-        let diagnosticsItem = helpMenu.addItem(withTitle: "诊断…", action: #selector(showDiagnosticsWindow(_:)), keyEquivalent: "")
+        let helpMenu = NSMenu(title: "Help")
+        let diagnosticsItem = helpMenu.addItem(withTitle: "Diagnostics…", action: #selector(showDiagnosticsWindow(_:)), keyEquivalent: "")
         diagnosticsItem.target = self
-        let releaseItem = helpMenu.addItem(withTitle: "打开发行页", action: #selector(openReleasePageAction(_:)), keyEquivalent: "")
+        let releaseItem = helpMenu.addItem(withTitle: "Open Release Page", action: #selector(openReleasePageAction(_:)), keyEquivalent: "")
         releaseItem.target = self
         helpItem.submenu = helpMenu
         mainMenu.addItem(helpItem)
@@ -741,13 +741,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
             DispatchQueue.main.async {
                 if let error {
                     BackgroundCompletionNotifications.setEnabled(false)
-                    self?.notificationPermissionStatus = "请求失败：\(error.localizedDescription)"
-                    self?.presentError("通知权限请求失败：\(error.localizedDescription)")
+                    self?.notificationPermissionStatus = "Request failed: \(error.localizedDescription)"
+                    self?.presentError("Notification permission request failed: \(error.localizedDescription)")
                 } else {
                     BackgroundCompletionNotifications.setEnabled(granted)
-                    self?.notificationPermissionStatus = granted ? "已授权" : "未授权"
+                    self?.notificationPermissionStatus = granted ? "Authorized" : "Not authorized"
                     if !granted {
-                        self?.presentError("系统没有授予通知权限。可以到系统设置的通知里为 ChatGPT Swift 打开。")
+                        self?.presentError("Notification permission was not granted. Enable notifications for ChatGPT Swift in System Settings > Notifications.")
                     }
                 }
                 self?.refreshNativeUtilityWindows()
@@ -804,9 +804,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
                 return
             }
             if enabled {
-                controller?.showToast("已默认拒绝非必要 Cookie；所有账号空间将在下次加载时继续执行")
+                controller?.showToast("Nonessential cookies are now rejected by default. This applies to all profiles on their next load")
             } else {
-                controller?.showToast("已取消默认拒绝；所有账号空间下次加载可在 Cookie Preferences 中选择")
+                controller?.showToast("Default rejection disabled. Choose in Cookie Preferences when each profile next loads")
             }
             // Consent writes complete asynchronously and can finish after a navigation
             // failure. Recompute the toolbar status so this informational message cannot
@@ -943,7 +943,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
 
     private func checkForUpdatesFromUserAction(_ sender: Any?) {
         if let sparkleUpdaterController {
-            updateCheckStatus = "已交给 Sparkle 检查更新；\(sparkleStatus)。当前版本：\(Self.appVersionText())。"
+            updateCheckStatus = "Sparkle is checking for updates; \(sparkleStatus). Current version: \(Self.appVersionText())."
             refreshNativeUtilityWindows()
             sparkleUpdaterController.checkForUpdates(sender)
             return
@@ -953,7 +953,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
     }
 
     private func checkForUpdates(showAlert: Bool) {
-        updateCheckStatus = "正在检查 GitHub Releases…"
+        updateCheckStatus = "Checking GitHub Releases…"
         refreshNativeUtilityWindows()
 
         var request = URLRequest(url: latestReleaseAPIURL)
@@ -973,7 +973,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
                 }
 
                 if let error {
-                    self.updateCheckStatus = "检查失败：\(error.localizedDescription)"
+                    self.updateCheckStatus = "Check failed: \(error.localizedDescription)"
                     self.refreshNativeUtilityWindows()
                     if showAlert {
                         self.presentUpdateCheckResult(self.updateCheckStatus, canOpenReleasePage: true)
@@ -989,7 +989,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
                       responseHost == "api.github.com",
                       let data,
                       data.count <= 512 * 1024 else {
-                    self.updateCheckStatus = "没有可读取的 GitHub Release feed（HTTP \(statusCode)）。"
+                    self.updateCheckStatus = "No readable GitHub Release feed (HTTP \(statusCode))."
                     self.refreshNativeUtilityWindows()
                     if showAlert {
                         self.presentUpdateCheckResult(self.updateCheckStatus, canOpenReleasePage: true)
@@ -1000,14 +1000,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
                 do {
                     let release = try JSONDecoder().decode(GitHubRelease.self, from: data)
                     let title = release.name?.isEmpty == false ? release.name! : release.tagName
-                    let date = release.publishedAt?.isEmpty == false ? "，发布时间 \(release.publishedAt!)" : ""
-                    self.updateCheckStatus = "最新发布：\(title)\(date)。当前版本：\(Self.appVersionText())。\(self.sparkleStatus)，GitHub Releases 仅用于手动查看。"
+                    let date = release.publishedAt?.isEmpty == false ? ", published \(release.publishedAt!)" : ""
+                    self.updateCheckStatus = "Latest release: \(title)\(date). Current version: \(Self.appVersionText()). \(self.sparkleStatus). GitHub Releases are for manual review only."
                     self.refreshNativeUtilityWindows()
                     if showAlert {
                         self.presentUpdateCheckResult(self.updateCheckStatus, canOpenReleasePage: release.htmlURL != nil)
                     }
                 } catch {
-                    self.updateCheckStatus = "Release feed 解析失败：\(error.localizedDescription)"
+                    self.updateCheckStatus = "Could not parse release feed: \(error.localizedDescription)"
                     self.refreshNativeUtilityWindows()
                     if showAlert {
                         self.presentUpdateCheckResult(self.updateCheckStatus, canOpenReleasePage: true)
@@ -1019,17 +1019,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
 
     private func presentUpdateCheckResult(_ message: String, canOpenReleasePage: Bool) {
         let alert = NSAlert()
-        alert.messageText = "检查更新"
+        alert.messageText = "Check for Updates"
         alert.informativeText = message
         alert.alertStyle = .informational
         if canOpenReleasePage {
-            alert.addButton(withTitle: "打开发行页")
-            alert.addButton(withTitle: "关闭")
+            alert.addButton(withTitle: "Open Release Page")
+            alert.addButton(withTitle: "Close")
             if alert.runModal() == .alertFirstButtonReturn {
                 openReleasePage()
             }
         } else {
-            alert.addButton(withTitle: "知道了")
+            alert.addButton(withTitle: "OK")
             alert.runModal()
         }
     }
@@ -1037,13 +1037,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
     private func makeAppSettingsState() -> AppSettingsState {
         let profile = ProfileStore.currentProfile()
         let startupID = ProfileStore.startupProfileID()
-        let startupName = ProfileStore.loadProfiles().first(where: { $0.id == startupID })?.name ?? "默认"
-        let fingerprintName = ProfileStore.fingerprint(for: profile.id)?.displayName ?? "默认 Safari（不混淆）"
+        let startupName = ProfileStore.loadProfiles().first(where: { $0.id == startupID })?.name ?? "Default"
+        let fingerprintName = ProfileStore.fingerprint(for: profile.id)?.displayName ?? "Default Safari (No Obfuscation)"
         let isolation: String
         if #available(macOS 14.0, *) {
-            isolation = profile.id == defaultProfileID ? "内置 WebView 数据仓库" : "独立 WKWebsiteDataStore"
+            isolation = profile.id == defaultProfileID ? "Built-in WebView Data Store" : "Isolated WKWebsiteDataStore"
         } else {
-            isolation = "当前系统不支持多账号持久数据仓库隔离"
+            isolation = "This system does not support isolated persistent data stores for multiple profiles"
         }
 
         return AppSettingsState(
@@ -1062,9 +1062,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
             rejectNonEssentialCookiesEnabled: CookieConsentSettings.isEnabled(),
             keepThirdPartyLinksInApp: PrivacySettings.keepThirdPartyLinksInApp(),
             windowTitleDisplayMode: WindowTitleSettings.mode(),
-            notesAutomationStatus: "按需请求；首次插入选中备忘录正文时由 macOS 弹出授权。",
+            notesAutomationStatus: "Requested when needed. macOS asks for permission the first time you insert a selected note.",
             updateStatus: updateCheckStatus,
-            distributionStatus: "\(sparkleStatus)。当前交付采用本地统一自签名；打包与安装脚本会验收 codesign、universal 架构和最低系统版本。Developer ID 与公证仅是可选外部分发路径。",
+            distributionStatus: "\(sparkleStatus). This build uses local self-signing. Packaging and installation verify code signing, universal architecture, and the minimum system version. Developer ID and notarization are optional for external distribution.",
             autoOpenFinderAfterDownload: UserDefaults.standard.bool(forKey: "ChatGPTSwiftWeb.DownloadCenter.AutoOpenFinder"),
             networkStatus: MainActor.assumeIsolated { "\(NetworkStatusMonitor.shared.availability.title) · \(NetworkStatusMonitor.shared.interfaceDescription)" },
             quickWindowEnabled: QuickWindowPreferences.isEnabled,
@@ -1075,7 +1075,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
 
     private func makeDiagnosticsState() -> AppDiagnosticsState {
         let generatedAt = Self.timestampString(Date())
-        let cloudflareSummary = mainController?.cloudflareDiagnosticsSummary() ?? "主窗口不可用，暂无 Cloudflare 事件"
+        let cloudflareSummary = mainController?.cloudflareDiagnosticsSummary() ?? "Main window unavailable; no Cloudflare events"
         return AppDiagnosticsState(
             generatedAt: generatedAt,
             report: makeDiagnosticsReport(generatedAt: generatedAt),
@@ -1085,9 +1085,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
 
     private func exportDiagnosticsPackage(_ state: AppDiagnosticsState) {
         let panel = NSSavePanel()
-        panel.title = "导出诊断包"
-        panel.message = "导出默认脱敏后的当前诊断、最近 10 分钟本 App 统一日志和崩溃报告。不会主动读取 cookies、localStorage 或聊天正文；账号名、会话标题、完整 URL、邮箱和用户主目录会按已知模式脱敏。分享前仍请检查包内文本。"
-        panel.prompt = "导出"
+        panel.title = "Export Diagnostics Bundle"
+        panel.message = "Exports redacted diagnostics, app logs from the last 10 minutes, and crash reports. Does not read cookies, localStorage, or chat content. Known patterns redact account names, conversation titles, full URLs, email addresses, and your home directory. Review the text before sharing."
+        panel.prompt = "Export"
         panel.allowedContentTypes = [.zip]
         panel.nameFieldStringValue = "chatgpt-swift-diagnostics-\(Self.filenameTimestamp(Date())).zip"
 
@@ -1194,7 +1194,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
                     throw NSError(
                         domain: "ChatGPTSwiftWeb.DiagnosticsExport",
                         code: Int(zipResult.exitCode),
-                        userInfo: [NSLocalizedDescriptionKey: zipResult.errorOutput.isEmpty ? "ditto 打包失败" : zipResult.errorOutput]
+                        userInfo: [NSLocalizedDescriptionKey: zipResult.errorOutput.isEmpty ? "ditto packaging failed" : zipResult.errorOutput]
                     )
                 }
 
@@ -1203,7 +1203,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
                 }
             } catch {
                 DispatchQueue.main.async {
-                    self?.presentError("导出诊断包失败：\(error.localizedDescription)")
+                    self?.presentError("Could not export diagnostics bundle: \(error.localizedDescription)")
                 }
             }
         }
@@ -1211,7 +1211,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
 
     private func makeDiagnosticsReport(generatedAt: String) -> String {
         let profile = ProfileStore.currentProfile()
-        let fingerprintName = ProfileStore.fingerprint(for: profile.id)?.displayName ?? "默认 Safari（不混淆）"
+        let fingerprintName = ProfileStore.fingerprint(for: profile.id)?.displayName ?? "Default Safari (No Obfuscation)"
         let profileLabel = DiagnosticRedactor.profileLabel(isDefault: profile.id == defaultProfileID)
         let startupProfileLabel = ProfileStore.startupProfileID() == defaultProfileID
             ? defaultProfileID
@@ -1221,50 +1221,50 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         var sections: [String] = []
 
         sections.append(Self.diagnosticSection("App", [
-            ("生成时间", generatedAt),
+            ("Generated At", generatedAt),
             ("Bundle ID", bundle.bundleIdentifier ?? appBundleIdentifier),
-            ("版本", Self.appVersionText()),
-            ("进程", "\(process.processName) / pid \(process.processIdentifier)"),
-            ("系统", process.operatingSystemVersionString),
-            ("Bundle 路径", bundle.bundlePath),
-            ("进程启动时间", Self.timestampString(processStartedAt)),
-            ("App 完成启动时间", didFinishLaunchingAt.map(Self.timestampString) ?? "未知"),
-            ("启动到 didFinishLaunching", Self.durationString(from: processStartedAt, to: didFinishLaunchingAt)),
-            ("当前运行时长", Self.durationString(from: processStartedAt, to: Date())),
-            ("上次运行", previousRunSummary),
-            ("最近崩溃报告", Self.crashReportSummary(limit: 5)),
+            ("Version", Self.appVersionText()),
+            ("Process", "\(process.processName) / pid \(process.processIdentifier)"),
+            ("System", process.operatingSystemVersionString),
+            ("Bundle Path", bundle.bundlePath),
+            ("Process Started At", Self.timestampString(processStartedAt)),
+            ("App Launch Completed At", didFinishLaunchingAt.map(Self.timestampString) ?? "Unknown"),
+            ("Startup to didFinishLaunching", Self.durationString(from: processStartedAt, to: didFinishLaunchingAt)),
+            ("Current Uptime", Self.durationString(from: processStartedAt, to: Date())),
+            ("Previous Run", previousRunSummary),
+            ("Recent Crash Reports", Self.crashReportSummary(limit: 5)),
         ]))
 
-        sections.append(Self.diagnosticSection("性能趋势", performanceMonitor.diagnosticRows()))
+        sections.append(Self.diagnosticSection("Performance Trends", performanceMonitor.diagnosticRows()))
 
-        sections.append(Self.diagnosticSection("账号空间 / 隐私", [
-            ("当前空间", profileLabel),
-            ("空间配置恢复", ProfileStore.metadataRecoveryRequired ? "需要恢复；原始配置已保留，写操作已暂停" : "正常"),
-            ("首页", DiagnosticRedactor.url(ProfileStore.homepageURL(for: profile.id))),
-            ("启动默认空间", startupProfileLabel),
-            ("本机草稿恢复", PromptDraftStore.isRestoreEnabled() ? "开启" : "关闭"),
-            ("当前空间草稿", PromptDraftStore.draftSummary(for: profile.id)),
-            ("非必要 Cookie 默认拒绝", CookieConsentSettings.isEnabled() ? "开启" : "关闭"),
-            ("后台完成通知", BackgroundCompletionNotifications.isEnabled() ? "开启" : "关闭"),
-            ("通知权限", notificationPermissionStatus),
-            ("指纹预设", fingerprintName),
-            ("增强隐私模式", ProfileStore.isEnhancedPrivacyEnabled(for: profile.id) ? "开启" : "关闭"),
-            ("WebRTC 防护", PrivacySettings.isWebRTCProtectionEnabled() ? "开启" : "关闭"),
-            ("第三方链接在 App 内打开", PrivacySettings.keepThirdPartyLinksInApp() ? "开启" : "关闭"),
+        sections.append(Self.diagnosticSection("Profiles / Privacy", [
+            ("Current Profile", profileLabel),
+            ("Profile Configuration Recovery", ProfileStore.metadataRecoveryRequired ? "Recovery required; original configuration preserved, writes paused" : "Normal"),
+            ("Homepage", DiagnosticRedactor.url(ProfileStore.homepageURL(for: profile.id))),
+            ("Startup Profile", startupProfileLabel),
+            ("Local Draft Recovery", PromptDraftStore.isRestoreEnabled() ? "On" : "Close"),
+            ("Profile Drafts", PromptDraftStore.draftSummary(for: profile.id)),
+            ("Reject Nonessential Cookies by Default", CookieConsentSettings.isEnabled() ? "On" : "Close"),
+            ("Background Completion Notifications", BackgroundCompletionNotifications.isEnabled() ? "On" : "Close"),
+            ("Notification Permission", notificationPermissionStatus),
+            ("Fingerprint Preset", fingerprintName),
+            ("Enhanced Privacy", ProfileStore.isEnhancedPrivacyEnabled(for: profile.id) ? "On" : "Close"),
+            ("WebRTC Protection", PrivacySettings.isWebRTCProtectionEnabled() ? "On" : "Close"),
+            ("Open Third-Party Links in App", PrivacySettings.keepThirdPartyLinksInApp() ? "On" : "Close"),
         ]))
 
         if let controller = mainController {
             sections.append(controller.diagnosticsReport())
         } else {
-            sections.append(Self.diagnosticSection("WebView", [("状态", "mainController 不存在")]))
+            sections.append(Self.diagnosticSection("WebView", [("Status", "mainController unavailable")]))
         }
 
-        sections.append(Self.diagnosticSection("分发", [
-            ("更新检查", updateCheckStatus),
+        sections.append(Self.diagnosticSection("Distribution", [
+            ("Update Check", updateCheckStatus),
             ("Sparkle", sparkleStatus),
-            ("发行页", releasePageURL.absoluteString),
-            ("签名策略", "本地统一自签名；codesign、universal 架构和最低系统版本由打包与安装脚本验收。"),
-            ("可选外部分发", "仅选择 Developer ID 分发时才要求 notarization / stapler；不影响本地安装验收。"),
+            ("Release Page", releasePageURL.absoluteString),
+            ("Signing Policy", "Local self-signing; packaging and installation verify code signing, universal architecture, and the minimum system version."),
+            ("Optional External Distribution", "Notarization / stapler are required only for Developer ID distribution; local installation verification is unaffected."),
         ]))
 
         return DiagnosticRedactor.text(sections.joined(separator: "\n\n"))
@@ -1280,7 +1280,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         case let (short?, nil):
             return short
         default:
-            return "开发构建"
+            return "Development Build"
         }
     }
 
@@ -1299,7 +1299,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
 
     private static func durationString(from start: Date, to end: Date?) -> String {
         guard let end else {
-            return "未知"
+            return "Unknown"
         }
         return String(format: "%.3fs", max(0, end.timeIntervalSince(start)))
     }
@@ -1373,10 +1373,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
     private static func crashReportSummary(limit: Int) -> String {
         let reports = recentCrashReportURLs(limit: limit)
         guard !reports.isEmpty else {
-            return "无"
+            return "None"
         }
         return reports.map { url in
-            "\(url.lastPathComponent)（\(Self.timestampString(Self.fileModificationDate(url)))）"
+            "\(url.lastPathComponent) (\(Self.timestampString(Self.fileModificationDate(url))))"
         }.joined(separator: "\n")
     }
 
@@ -1431,7 +1431,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
                 self.profileMutationInProgress = false
                 self.applyCurrentCookiePreferenceAfterMutation()
                 self.rebuildMainController()
-                self.presentInfo("已焚烧当前空间浏览现场，并恢复为默认 Safari 指纹。空间名称、首页和增强隐私设置已保留。")
+                self.presentInfo("Cleared browsing data for this profile and restored the default Safari fingerprint. Profile name, homepage, and enhanced privacy settings were preserved.")
             }
         }
     }
@@ -1455,9 +1455,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
     @objc private func showPrivacyStatus(_ sender: Any?) {
         let profile = ProfileStore.currentProfile()
         let fingerprint = ProfileStore.fingerprint(for: profile.id)
-        let fingerprintText = fingerprint?.displayName ?? "默认 Safari（不混淆）"
-        let enhancedPrivacyText = ProfileStore.isEnhancedPrivacyEnabled(for: profile.id) ? "开启" : "关闭"
-        let webRTCText = PrivacySettings.isWebRTCProtectionEnabled() ? "开启" : "关闭"
+        let fingerprintText = fingerprint?.displayName ?? "Default Safari (No Obfuscation)"
+        let enhancedPrivacyText = ProfileStore.isEnhancedPrivacyEnabled(for: profile.id) ? "On" : "Close"
+        let webRTCText = PrivacySettings.isWebRTCProtectionEnabled() ? "On" : "Close"
         let assessment = FingerprintCatalog.privacyAssessment(
             fingerprint: fingerprint,
             enhancedPrivacyEnabled: ProfileStore.isEnhancedPrivacyEnabled(for: profile.id),
@@ -1465,30 +1465,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         )
         let isolation: String
         if #available(macOS 14.0, *) {
-            isolation = profile.id == defaultProfileID ? "内置空间使用本 App 默认 WebView 数据仓库" : "当前空间使用独立 WKWebsiteDataStore"
+            isolation = profile.id == defaultProfileID ? "The built-in profile uses this app's default WebView data store" : "This profile uses an isolated WKWebsiteDataStore"
         } else {
-            isolation = "当前系统不支持多账号持久数据仓库隔离"
+            isolation = "This system does not support isolated persistent data stores for multiple profiles"
         }
 
         let alert = NSAlert()
-        alert.messageText = "隐私状态"
+        alert.messageText = "Privacy Status"
         alert.informativeText = """
-        当前空间：\(profile.name)
-        数据隔离：\(isolation)
-        指纹预设：\(fingerprintText)
-        增强隐私模式：\(enhancedPrivacyText)
-        WebRTC 防护：\(webRTCText)
-        GPC：JS 信号开启；主导航请求头 Sec-GPC 开启
-        URL 追踪参数清理：开启，仅处理顶层导航
-        Referrer 控制：开启，跨站顶层导航最多保留来源站点 origin
-        Accept-Language：JS 层覆盖；本 App 发起的顶层导航请求会带当前空间语言头，子资源仍由 WKWebView / 系统决定
-        Tracker blocking：未启用
+        Current Profile: \(profile.name)
+        Data Isolation: \(isolation)
+        Fingerprint Preset: \(fingerprintText)
+        Enhanced Privacy: \(enhancedPrivacyText)
+        WebRTC Protection: \(webRTCText)
+        GPC: JavaScript signal enabled; Sec-GPC enabled for main navigation requests
+        URL tracking parameter removal: enabled for top-level navigation only
+        Referrer control: enabled; cross-site top-level navigation retains at most the source origin
+        Accept-Language: overridden in JavaScript; app-initiated top-level navigation uses the profile language header. Subresources are controlled by WKWebView / the system
+        Tracker blocking: disabled
 
-        一致性评估：
+        Consistency Assessment:
         \(assessment)
         """
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "知道了")
+        alert.addButton(withTitle: "OK")
         alert.runModal()
     }
 
@@ -1504,8 +1504,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         }
         let initial = controller.currentURL()?.absoluteString ?? ""
         promptForURL(
-            title: "前往网址",
-            message: "输入 https:// 开头的网址。该网址将在当前账号空间内加载，cookie 和登录态与其他空间相互隔离。",
+            title: "Go to URL",
+            message: "Enter an https:// URL. It will load in the current profile, with cookies and login sessions isolated from other profiles.",
             initial: initial
         ) { [weak self] url in
             guard let self, let url else {
@@ -1558,13 +1558,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         guard let controller = BrowserWindowController.keyWindowController() ?? mainController,
               let url = controller.currentURL(),
               let safeURL = NavigationRules.sanitizedUserFacingURL(url, sourceURL: url) else {
-            presentError("当前页面没有可安全复制的 HTTPS 链接；登录临时参数不会写入剪贴板。")
+            presentError("This page has no HTTPS link that can be safely copied. Temporary login parameters will not be copied to the clipboard.")
             return
         }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(safeURL.absoluteString, forType: .string)
         if safeURL != url {
-            controller.setStatus("已移除登录临时参数后复制", showsProgress: false)
+            controller.setStatus("Copied after removing temporary login parameters", showsProgress: false)
         }
     }
 
@@ -1573,8 +1573,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         let profile = ProfileStore.currentProfile()
         let initial = ProfileStore.homepageString(for: profile.id) ?? ""
         promptForURL(
-            title: "设置空间 \"\(profile.name)\" 的首页",
-            message: "下次启动或切换到本空间时将自动加载该网址。仅支持 https://。留空可以保持当前设置。",
+            title: "Set Homepage for Profile \"\(profile.name)\"",
+            message: "This URL will load on the next launch or switch to this profile. Only https:// is supported. Leave blank to keep the current setting.",
             initial: initial
         ) { [weak self] url in
             guard let self, let url else {
@@ -1596,7 +1596,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         let controller = BrowserWindowController(
             initialURL: chatGPTURL,
             title: ProfileWindowTitle.format(
-                profileName: "无痕",
+                profileName: "Private",
                 isDefault: false,
                 mode: WindowTitleSettings.mode()
             ),
@@ -1616,7 +1616,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
               let id = sender.representedObject as? String,
               ProfileStore.loadProfiles().contains(where: { $0.id == id }), id != ProfileStore.currentProfileID() else { return }
         profileSwitchInProgress = true
-        mainController?.showToast("正在切换空间…")
+        mainController?.showToast("Switching profiles…")
         let finish = { [weak self] in
             guard let self, self.profileSwitchInProgress else { return }
             self.profileSwitchInProgress = false
@@ -1645,12 +1645,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
     private func setProfileAsDefault(id: String) {
         guard ensureProfileMetadataWritable() else { return }
         guard ProfileStore.setStartupProfileID(id) else {
-            presentError("设置启动默认空间失败：找不到目标空间。")
+            presentError("Could not set the startup profile: target profile not found.")
             return
         }
         profilesMenu.map(rebuildProfilesMenu(_:))
-        let profileName = ProfileStore.loadProfiles().first(where: { $0.id == id })?.name ?? "目标空间"
-        presentInfo("已将「\(profileName)」设为启动默认空间。")
+        let profileName = ProfileStore.loadProfiles().first(where: { $0.id == id })?.name ?? "Target Profile"
+        presentInfo("Set “\(profileName)” as the startup profile.")
     }
 
     @objc private func selectFingerprintPreset(_ sender: NSMenuItem) {
@@ -1691,14 +1691,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
             return
         }
         let source = ProfileStore.currentProfile()
-        let defaultName = "\(source.name) 副本"
+        let defaultName = "\(source.name) Copy"
 
         let alert = NSAlert()
-        alert.messageText = "克隆当前空间"
-        alert.informativeText = "会复制首页和增强隐私设置，并自动为新空间生成稳定随机指纹。默认不复制 cookies，可按需勾选。"
+        alert.messageText = "Clone Current Profile"
+        alert.informativeText = "Copies the homepage and enhanced privacy settings and generates a stable random fingerprint. Cookies are not copied unless selected below."
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "克隆")
-        alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: "Clone")
+        alert.addButton(withTitle: "Cancel")
 
         let stack = NSStackView(frame: NSRect(x: 0, y: 0, width: 320, height: 56))
         stack.orientation = .vertical
@@ -1707,10 +1707,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
 
         let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 320, height: 24))
         textField.stringValue = uniqueProfileName(defaultName)
-        textField.placeholderString = "新空间名称"
+        textField.placeholderString = "New Profile Name"
         stack.addArrangedSubview(textField)
 
-        let copyCookiesButton = NSButton(checkboxWithTitle: "同时复制 cookies", target: nil, action: nil)
+        let copyCookiesButton = NSButton(checkboxWithTitle: "Also Copy Cookies", target: nil, action: nil)
         copyCookiesButton.state = .off
         stack.addArrangedSubview(copyCookiesButton)
 
@@ -1737,7 +1737,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         let profile = ProfileStore.currentProfile()
         let panel = NSSavePanel()
         panel.title = "Export Profile"
-        panel.message = "导出当前空间配置：名称、首页、指纹预设和增强隐私设置。不会导出 cookies 或网站数据。"
+        panel.message = "Exports the profile name, homepage, fingerprint preset, and enhanced privacy settings. Does not export cookies or website data."
         panel.prompt = "Export"
         panel.allowedContentTypes = [.json]
         panel.nameFieldStringValue = "\(profile.name)-profile.json"
@@ -1757,7 +1757,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         }
         let panel = NSOpenPanel()
         panel.title = "Import Profile"
-        panel.message = "选择之前导出的 profile JSON。导入会创建一个新的账号空间，不会覆盖现有空间。"
+        panel.message = "Choose a previously exported profile JSON file. Import creates a new profile without replacing existing profiles."
         panel.prompt = "Import"
         panel.allowedContentTypes = [.json]
         panel.allowsMultipleSelection = false
@@ -1779,14 +1779,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
             return
         }
         guard ProfileStore.restoreProfilesFromBackup() else {
-            presentError("没有可自动恢复的有效空间配置备份。可以先导出原始备份，再选择重建默认空间。")
+            presentError("No valid profile backup is available for automatic recovery. Export the original backup before resetting the default profile.")
             return
         }
         profilesMenu.map(rebuildProfilesMenu(_:))
         updateWebRTCProtectionMenuItem()
         updateEnhancedPrivacyMenuItem()
         rebuildMainController()
-        presentInfo("已从保留的原始备份恢复账号空间配置；网站数据未被删除。")
+        presentInfo("Restored profile settings from the preserved original backup. Website data was not deleted.")
     }
 
     @objc private func resetProfileMetadataAfterRecoveryAction(_ sender: Any?) {
@@ -1796,11 +1796,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
             return
         }
         let alert = NSAlert()
-        alert.messageText = "重建默认空间配置？"
-        alert.informativeText = "将保留原始损坏配置备份，只重建一个默认空间；不会删除任何 WebKit 网站数据。之后可以从“检查遗留账号空间数据”中单独处理旧空间。"
+        alert.messageText = "Reset Default Profile Settings?"
+        alert.informativeText = "Preserves the original damaged configuration backup and resets only the default profile. No WebKit website data will be deleted. Use “Check Leftover Profile Data” to manage old profiles separately afterward."
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "重建默认空间")
-        alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: "Reset Default Profile")
+        alert.addButton(withTitle: "Cancel")
         guard alert.runModal() == .alertFirstButtonReturn else {
             return
         }
@@ -1809,49 +1809,49 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         updateWebRTCProtectionMenuItem()
         updateEnhancedPrivacyMenuItem()
         rebuildMainController()
-        presentInfo("已重建默认空间配置；网站数据仍保留。")
+        presentInfo("Reset default profile settings. Website data was preserved.")
     }
 
     @objc private func exportCorruptProfileMetadataAction(_ sender: Any?) {
         guard let data = ProfileStore.corruptProfilesBackupData else {
-            presentError("没有可导出的原始空间配置备份。")
+            presentError("No original profile configuration backup is available to export.")
             return
         }
         let panel = NSSavePanel()
-        panel.title = "导出原始空间配置备份"
-        panel.message = "该文件可能包含账号空间名称、首页和隐私配置；不会包含 cookies 或网站数据。"
-        panel.prompt = "导出"
+        panel.title = "Export Original Profile Configuration Backup"
+        panel.message = "This file may contain profile names, homepages, and privacy settings. It does not contain cookies or website data."
+        panel.prompt = "Export"
         panel.allowedContentTypes = [.json]
         panel.nameFieldStringValue = "ChatGPT-Swift-corrupt-profile-backup.json"
         panel.begin { [weak self] response in
             guard response == .OK, let url = panel.url else { return }
             do {
                 try BrowserDataBoundary.writeSensitiveData(data, to: url)
-                self?.presentInfo("已导出原始空间配置备份。")
+                self?.presentInfo("Exported the original profile configuration backup.")
             } catch {
-                self?.presentError("导出原始备份失败：\(error.localizedDescription)")
+                self?.presentError("Could not export original backup: \(error.localizedDescription)")
             }
         }
     }
 
     @objc private func showFingerprintAbout(_ sender: Any?) {
         let alert = NSAlert()
-        alert.messageText = "指纹混淆能挡什么，不能挡什么"
+        alert.messageText = "Fingerprint Protection and Its Limits"
         alert.informativeText = """
-        能加强：每个空间固定一套 Safari/WebKit 家族指纹，覆盖 UA、navigator、screen、Intl、触控、Canvas、WebGL、AudioContext、GPC、WebRTC 暴露面等常见 JS 层信号。
+        Protection: each profile uses a fixed Safari/WebKit fingerprint for common JavaScript signals, including UA, navigator, screen, Intl, touch, Canvas, WebGL, AudioContext, GPC, and WebRTC.
 
-        推荐做法：日常保持默认 Safari 指纹；只有明确需要隔离特征时，再手动选择或随机化当前空间指纹。不要频繁切换成完全不同设备。
+        Recommendation: keep the default Safari fingerprint for everyday use. Select or randomize a profile fingerprint only when you need separate characteristics. Avoid frequent switches between very different devices.
 
-        挡不住：
-        - TLS 指纹（JA3 / JA4）：WKWebView 使用系统网络栈，App 无法逐站点修改。
-        - HTTP/2 帧顺序和 WebKit 渲染细节：仍会暴露 Safari/WebKit 引擎特征。
-        - Worker、字体、GPU、窗口尺寸、行为模式等强风控信号：只能降低暴露，不能保证隐藏。
-        - 网络出口：同一出口网络仍可能把不同账号关联到同一环境。
+        Cannot hide:
+        - TLS fingerprints (JA3 / JA4): WKWebView uses the system network stack, which this app cannot modify per site.
+        - HTTP/2 frame ordering and WebKit rendering details: these still reveal the Safari/WebKit engine.
+        - Workers, fonts, GPU, window size, and behavior: exposure can be reduced, but hiding these signals is not guaranteed.
+        - Network egress: the same network may still link different accounts to the same environment.
 
-        所以本 App 只做「Safari-only 一致性隐私指纹」，不做 Chrome / Firefox 跨引擎伪装。
+        This app provides consistent Safari-only privacy fingerprints. It does not impersonate Chrome or Firefox.
         """
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "知道了")
+        alert.addButton(withTitle: "OK")
         alert.runModal()
     }
 
@@ -1860,7 +1860,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         guard ensureIsolationAvailable() else {
             return
         }
-        promptForName(title: "新建账号空间", initial: "") { [weak self] name in
+        promptForName(title: "New Profile", initial: "") { [weak self] name in
             guard let self, let name else {
                 return
             }
@@ -1886,7 +1886,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         guard let idx = profiles.firstIndex(where: { $0.id == currentID }) else {
             return
         }
-        promptForName(title: "重命名当前空间", initial: profiles[idx].name) { [weak self] name in
+        promptForName(title: "Rename Current Profile", initial: profiles[idx].name) { [weak self] name in
             guard let self, let name else {
                 return
             }
@@ -1910,10 +1910,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
 
     private func presentDuplicateNameAlert(name: String) {
         let alert = NSAlert()
-        alert.messageText = "已存在同名账号空间"
-        alert.informativeText = "已经有一个名为「\(name)」的账号空间。请换一个名字。"
+        alert.messageText = "Profile Name Already Exists"
+        alert.informativeText = "A profile named “\(name)” already exists. Choose another name."
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "知道了")
+        alert.addButton(withTitle: "OK")
         alert.runModal()
     }
 
@@ -1930,13 +1930,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
 
     private func deleteProfile(id: String) {
         guard !ProfileStore.metadataRecoveryRequired else {
-            presentError("账号空间配置无法读取；原始配置已保留，恢复前不会删除任何空间数据。")
+            presentError("Cannot read profile settings. The original configuration was preserved. No profile data will be deleted before recovery.")
             return
         }
         let currentID = ProfileStore.currentProfileID()
         let profiles = ProfileStore.loadProfiles()
         guard let idx = profiles.firstIndex(where: { $0.id == id }) else {
-            presentError("删除失败：找不到目标空间。")
+            presentError("Deletion failed: target profile not found.")
             return
         }
         let profile = profiles[idx]
@@ -1946,14 +1946,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         }
 
         let alert = NSAlert()
-        alert.messageText = "删除账号空间 \"\(profile.name)\"？"
+        alert.messageText = "Delete Profile \"\(profile.name)\"?"
         let startupDefaultNote = profile.id == ProfileStore.startupProfileID()
-            ? "\n\n此空间当前是启动默认空间；删除后启动默认会自动回到内置空间。"
+            ? "\n\nThis is the startup profile. After deletion, startup will return to the built-in profile."
             : ""
-        alert.informativeText = "本空间的所有 cookie、登录态、缓存与本地存储将被永久删除。其他空间不受影响。\(startupDefaultNote)"
+        alert.informativeText = "All cookies, login sessions, cache, and local storage for this profile will be permanently deleted. Other profiles are unaffected.\(startupDefaultNote)"
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "删除")
-        alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: "Delete")
+        alert.addButton(withTitle: "Cancel")
         guard alert.runModal() == .alertFirstButtonReturn else {
             return
         }
@@ -1978,7 +1978,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
                 ProfileStore.setCurrentProfileID(profile.id)
                 rebuildMainController()
             }
-            presentError("当前系统无法安全删除该空间的数据仓库；空间配置已保留。")
+            presentError("This system cannot safely delete the profile's data store. Profile settings were preserved.")
             return
         }
         waitForCookieConsentOperations { [weak self] in
@@ -2000,14 +2000,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
                                 ProfileStore.setCurrentProfileID(profile.id)
                                 self.rebuildMainController()
                             }
-                            self.presentError("删除空间数据失败，已保留空间配置：\(error.localizedDescription)")
+                            self.presentError("Could not delete profile data. Profile settings were preserved: \(error.localizedDescription)")
                             return
                         }
                         self.profileMutationInProgress = false
                         self.finalizeProfileDeletion(profileID: profile.id)
                         ProfileStore.clearPendingDataMutation()
                         self.applyCurrentCookiePreferenceAfterMutation()
-                        self.presentInfo("已删除空间「\(profile.name)」及其网站数据。")
+                        self.presentInfo("Deleted profile “\(profile.name)” and its website data.")
                     }
                 }
             }
@@ -2032,11 +2032,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
 
     private func deleteDefaultProfile(_ profile: WebProfile, isCurrent: Bool) {
         let alert = NSAlert()
-        alert.messageText = "删除内置空间 \"\(profile.name)\"？"
-        alert.informativeText = "内置空间使用本 App 的默认 WebView 数据仓库。删除后会清空它的 cookies、登录态、缓存与本地存储，并把名称、首页、指纹和增强隐私设置重建为一个全新的内置空间。其他独立空间不受影响。"
+        alert.messageText = "Delete Built-In Profile \"\(profile.name)\"?"
+        alert.informativeText = "The built-in profile uses this app's default WebView data store. Deletion clears its cookies, login sessions, cache, and local storage, then creates a new built-in profile with a fresh name, homepage, fingerprint, and enhanced privacy settings. Other isolated profiles are unaffected."
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "删除并新建")
-        alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: "Delete and Recreate")
+        alert.addButton(withTitle: "Cancel")
         guard alert.runModal() == .alertFirstButtonReturn else {
             return
         }
@@ -2070,7 +2070,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
                     if isCurrent {
                         self.rebuildMainController()
                     }
-                    self.presentInfo("已删除并重新创建内置空间。")
+                    self.presentInfo("Deleted and recreated the built-in profile.")
                 }
             }
         }
@@ -2079,11 +2079,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
     @objc private func inspectOrphanedProfileDataStores(_ sender: Any?) {
         guard !profileMutationInProgress else { return }
         guard !ProfileStore.metadataRecoveryRequired else {
-            presentError("账号空间配置无法读取；原始配置已保留，恢复前不会检查或清理遗留数据。")
+            presentError("Cannot read profile settings. The original configuration was preserved. Leftover data will not be checked or cleared before recovery.")
             return
         }
         guard #available(macOS 14.0, *) else {
-            presentInfo("遗留账号空间数据检测需要 macOS 14 或更新版本。")
+            presentInfo("Checking leftover profile data requires macOS 14 or later.")
             return
         }
 
@@ -2103,16 +2103,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
                 guard !orphanedIdentifiers.isEmpty else {
                     self.profileMutationInProgress = false
                     self.applyCurrentCookiePreferenceAfterMutation()
-                    self.presentInfo("没有发现已删除账号空间遗留的网站数据。")
+                    self.presentInfo("No leftover website data from deleted profiles was found.")
                     return
                 }
 
                 let alert = NSAlert()
-                alert.messageText = "发现 \(orphanedIdentifiers.count) 份遗留账号空间数据"
-                alert.informativeText = "这些独立 WebKit 数据仓库已不属于当前账号空间，可能仍含 cookie、登录态、缓存与本地存储。清理后无法恢复；当前 \(activeProfileIDs.count) 个账号空间不会被删除。"
+                alert.messageText = "Found \(orphanedIdentifiers.count) Leftover Profile Data Stores"
+                alert.informativeText = "These WebKit data stores no longer belong to current profiles and may contain cookies, login sessions, cache, and local storage. Cleanup cannot be undone. Your \(activeProfileIDs.count) current profiles will not be deleted."
                 alert.alertStyle = .warning
-                alert.addButton(withTitle: "清理遗留数据")
-                alert.addButton(withTitle: "保留")
+                alert.addButton(withTitle: "Clear Leftover Data")
+                alert.addButton(withTitle: "Keep")
                 guard alert.runModal() == .alertFirstButtonReturn else {
                     self.profileMutationInProgress = false
                     self.applyCurrentCookiePreferenceAfterMutation()
@@ -2133,16 +2133,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         guard !ProfileStore.metadataRecoveryRequired else {
             profileMutationInProgress = false
             applyCurrentCookiePreferenceAfterMutation()
-            presentError("账号空间配置进入恢复模式，已停止遗留数据清理。")
+            presentError("Profile settings entered recovery mode. Leftover data cleanup stopped.")
             return
         }
         guard let identifier = remaining.first else {
             profileMutationInProgress = false
             applyCurrentCookiePreferenceAfterMutation()
             if failedCount == 0 {
-                presentInfo("已清理 \(removedCount) 份遗留账号空间数据。当前账号空间不受影响。")
+                presentInfo("Cleared \(removedCount) leftover profile data stores. Current profiles are unaffected.")
             } else {
-                presentError("已清理 \(removedCount) 份遗留数据，另有 \(failedCount) 份清理失败。请退出 App 后重试。")
+                presentError("Cleared \(removedCount) leftover data stores; \(failedCount) could not be cleared. Quit the app and try again.")
             }
             return
         }
@@ -2239,15 +2239,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         let isolationAvailable = isProfileIsolationAvailable
 
         if ProfileStore.metadataRecoveryRequired {
-            let warning = menu.addItem(withTitle: "空间配置需要恢复（写操作已暂停）", action: nil, keyEquivalent: "")
+            let warning = menu.addItem(withTitle: "Profile Settings Need Recovery (Writes Paused)", action: nil, keyEquivalent: "")
             warning.isEnabled = false
-            let restoreItem = menu.addItem(withTitle: "从保留备份恢复…", action: #selector(restoreProfileMetadataAction(_:)), keyEquivalent: "")
+            let restoreItem = menu.addItem(withTitle: "Restore from Preserved Backup…", action: #selector(restoreProfileMetadataAction(_:)), keyEquivalent: "")
             restoreItem.target = self
             restoreItem.isEnabled = !profileMutationInProgress && ProfileStore.pendingDataMutation == nil
-            let resetItem = menu.addItem(withTitle: "重建默认空间配置…", action: #selector(resetProfileMetadataAfterRecoveryAction(_:)), keyEquivalent: "")
+            let resetItem = menu.addItem(withTitle: "Reset Default Profile Settings…", action: #selector(resetProfileMetadataAfterRecoveryAction(_:)), keyEquivalent: "")
             resetItem.target = self
             resetItem.isEnabled = !profileMutationInProgress && ProfileStore.pendingDataMutation == nil
-            let exportItem = menu.addItem(withTitle: "导出原始配置备份…", action: #selector(exportCorruptProfileMetadataAction(_:)), keyEquivalent: "")
+            let exportItem = menu.addItem(withTitle: "Export Original Configuration Backup…", action: #selector(exportCorruptProfileMetadataAction(_:)), keyEquivalent: "")
             exportItem.target = self
             menu.addItem(NSMenuItem.separator())
         }
@@ -2260,57 +2260,57 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
             let profileItem = menu.addItem(withTitle: title, action: nil, keyEquivalent: "")
             let profileMenu = NSMenu(title: profile.name)
 
-            let switchItem = profileMenu.addItem(withTitle: "切换到本空间", action: #selector(switchToProfile(_:)), keyEquivalent: "")
+            let switchItem = profileMenu.addItem(withTitle: "Switch to This Profile", action: #selector(switchToProfile(_:)), keyEquivalent: "")
             switchItem.target = self
             switchItem.representedObject = profile.id
             switchItem.isEnabled = canUseProfile(profile.id) && profile.id != currentID
 
-            let setDefaultTitle = profile.id == defaultID ? "已是启动默认空间" : "设为启动默认空间"
+            let setDefaultTitle = profile.id == defaultID ? "Already the Startup Profile" : "Set as Startup Profile"
             let setDefaultItem = profileMenu.addItem(withTitle: setDefaultTitle, action: #selector(setProfileAsDefaultAction(_:)), keyEquivalent: "")
             setDefaultItem.target = self
             setDefaultItem.representedObject = profile.id
             setDefaultItem.isEnabled = canUseProfile(profile.id) && profile.id != defaultID
 
             profileMenu.addItem(NSMenuItem.separator())
-            let deleteItem = profileMenu.addItem(withTitle: "删除本空间…", action: #selector(deleteProfileAction(_:)), keyEquivalent: "")
+            let deleteItem = profileMenu.addItem(withTitle: "Delete This Profile…", action: #selector(deleteProfileAction(_:)), keyEquivalent: "")
             deleteItem.target = self
             deleteItem.representedObject = profile.id
             deleteItem.isEnabled = canDeleteProfile(profile.id)
             if profile.id == defaultProfileID {
-                deleteItem.toolTip = "删除内置空间会清空默认 WebView 数据仓库，并立即创建一个全新的内置空间。"
+                deleteItem.toolTip = "Deleting the built-in profile clears the default WebView data store and immediately creates a new built-in profile."
             }
 
             profileItem.submenu = profileMenu
         }
         menu.addItem(NSMenuItem.separator())
-        let setHomeItem = menu.addItem(withTitle: "设置当前空间首页…", action: #selector(setProfileHomepageAction(_:)), keyEquivalent: "")
+        let setHomeItem = menu.addItem(withTitle: "Set Profile Homepage…", action: #selector(setProfileHomepageAction(_:)), keyEquivalent: "")
         setHomeItem.target = self
-        let setDefaultTitle = currentID == defaultID ? "已是启动默认空间" : "设为启动默认空间"
+        let setDefaultTitle = currentID == defaultID ? "Already the Startup Profile" : "Set as Startup Profile"
         let setDefaultItem = menu.addItem(withTitle: setDefaultTitle, action: #selector(setCurrentProfileAsDefaultAction(_:)), keyEquivalent: "")
         setDefaultItem.target = self
         setDefaultItem.isEnabled = canUseProfile(currentID) && currentID != defaultID
         menu.addItem(NSMenuItem.separator())
-        let addItem = menu.addItem(withTitle: "新建账号空间…", action: #selector(addProfileAction(_:)), keyEquivalent: "")
+        let addItem = menu.addItem(withTitle: "New Profile…", action: #selector(addProfileAction(_:)), keyEquivalent: "")
         addItem.target = self
         addItem.isEnabled = isolationAvailable
-        let exportItem = menu.addItem(withTitle: "导出当前空间配置…", action: #selector(exportCurrentProfileAction(_:)), keyEquivalent: "")
+        let exportItem = menu.addItem(withTitle: "Export Profile Settings…", action: #selector(exportCurrentProfileAction(_:)), keyEquivalent: "")
         exportItem.target = self
-        let importItem = menu.addItem(withTitle: "导入空间配置…", action: #selector(importProfileAction(_:)), keyEquivalent: "")
+        let importItem = menu.addItem(withTitle: "Import Profile Settings…", action: #selector(importProfileAction(_:)), keyEquivalent: "")
         importItem.target = self
         importItem.isEnabled = isolationAvailable
-        let renameItem = menu.addItem(withTitle: "重命名当前空间…", action: #selector(renameCurrentProfileAction(_:)), keyEquivalent: "")
+        let renameItem = menu.addItem(withTitle: "Rename Current Profile…", action: #selector(renameCurrentProfileAction(_:)), keyEquivalent: "")
         renameItem.target = self
         renameItem.isEnabled = isolationAvailable || currentID == defaultProfileID
-        let deleteItem = menu.addItem(withTitle: "删除当前空间…", action: #selector(deleteCurrentProfileAction(_:)), keyEquivalent: "")
+        let deleteItem = menu.addItem(withTitle: "Delete Current Profile…", action: #selector(deleteCurrentProfileAction(_:)), keyEquivalent: "")
         deleteItem.target = self
         deleteItem.isEnabled = canDeleteProfile(currentID)
         if currentID == defaultProfileID {
-            deleteItem.toolTip = "删除内置空间会清空默认 WebView 数据仓库，并立即创建一个全新的内置空间。"
+            deleteItem.toolTip = "Deleting the built-in profile clears the default WebView data store and immediately creates a new built-in profile."
         }
 
         menu.addItem(NSMenuItem.separator())
         let inspectOrphansItem = menu.addItem(
-            withTitle: "检查遗留账号空间数据…",
+            withTitle: "Check Leftover Profile Data…",
             action: #selector(inspectOrphanedProfileDataStores(_:)),
             keyEquivalent: ""
         )
@@ -2319,7 +2319,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
 
         if !isolationAvailable {
             menu.addItem(NSMenuItem.separator())
-            let hint = menu.addItem(withTitle: "账号空间隔离需要 macOS 14 或更新版本", action: nil, keyEquivalent: "")
+            let hint = menu.addItem(withTitle: "Profile isolation requires macOS 14 or later", action: nil, keyEquivalent: "")
             hint.isEnabled = false
         }
     }
@@ -2342,12 +2342,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
     private func profileMenuTitle(for profile: WebProfile, currentID: String, startupID: String) -> String {
         var badges: [String] = []
         if profile.id == startupID {
-            badges.append("启动默认")
+            badges.append("Startup Default")
         }
         if profile.id == defaultProfileID {
-            badges.append("内置")
+            badges.append("Built-In")
         }
-        let suffix = badges.isEmpty ? "" : "（\(badges.joined(separator: "，"))）"
+        let suffix = badges.isEmpty ? "" : " (\(badges.joined(separator: ", ")))"
         return "\(profile.id == currentID ? "●" : " ") \(profile.name)\(suffix)"
     }
 
@@ -2355,30 +2355,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         menu.removeAllItems()
         let currentID = ProfileStore.currentProfileID()
 
-        let webRTCItem = menu.addItem(withTitle: "启用 WebRTC 防护", action: #selector(toggleWebRTCProtection(_:)), keyEquivalent: "")
+        let webRTCItem = menu.addItem(withTitle: "Enable WebRTC Protection", action: #selector(toggleWebRTCProtection(_:)), keyEquivalent: "")
         webRTCItem.target = self
         webRTCProtectionItem = webRTCItem
         updateWebRTCProtectionMenuItem()
 
-        let thirdPartyItem = menu.addItem(withTitle: "第三方链接在 App 内打开", action: #selector(toggleThirdPartyLinksInApp(_:)), keyEquivalent: "")
+        let thirdPartyItem = menu.addItem(withTitle: "Open Third-Party Links in App", action: #selector(toggleThirdPartyLinksInApp(_:)), keyEquivalent: "")
         thirdPartyItem.target = self
         thirdPartyItem.state = PrivacySettings.keepThirdPartyLinksInApp() ? .on : .off
 
         menu.addItem(NSMenuItem.separator())
-        let fingerprintItem = menu.addItem(withTitle: "指纹预设", action: nil, keyEquivalent: "")
-        let fingerprintMenu = NSMenu(title: "指纹预设")
+        let fingerprintItem = menu.addItem(withTitle: "Fingerprint Preset", action: nil, keyEquivalent: "")
+        let fingerprintMenu = NSMenu(title: "Fingerprint Preset")
         rebuildFingerprintMenu(fingerprintMenu, profileID: currentID)
         fingerprintItem.submenu = fingerprintMenu
 
-        let enhancedItem = menu.addItem(withTitle: "增强隐私模式（当前空间）", action: #selector(toggleEnhancedPrivacy(_:)), keyEquivalent: "")
+        let enhancedItem = menu.addItem(withTitle: "Enhanced Privacy (Current Profile)", action: #selector(toggleEnhancedPrivacy(_:)), keyEquivalent: "")
         enhancedItem.target = self
         enhancedPrivacyItem = enhancedItem
         updateEnhancedPrivacyMenuItem()
 
         menu.addItem(NSMenuItem.separator())
-        let privacyStatusItem = menu.addItem(withTitle: "隐私状态...", action: #selector(showPrivacyStatus(_:)), keyEquivalent: "")
+        let privacyStatusItem = menu.addItem(withTitle: "Privacy Status...", action: #selector(showPrivacyStatus(_:)), keyEquivalent: "")
         privacyStatusItem.target = self
-        let fingerprintTestItem = menu.addItem(withTitle: "打开指纹检测页", action: #selector(openFingerprintTestPage(_:)), keyEquivalent: "")
+        let fingerprintTestItem = menu.addItem(withTitle: "Open Fingerprint Test Page", action: #selector(openFingerprintTestPage(_:)), keyEquivalent: "")
         fingerprintTestItem.target = self
     }
 
@@ -2388,8 +2388,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         let currentPresetID = currentFingerprint?.presetID ?? FingerprintCatalog.offPresetID
 
         let offTitle = currentPresetID == FingerprintCatalog.offPresetID
-            ? "● 默认 Safari（不混淆）"
-            : "  默认 Safari（不混淆）"
+            ? "● Default Safari (No Obfuscation)"
+            : "  Default Safari (No Obfuscation)"
         let offItem = menu.addItem(withTitle: offTitle, action: #selector(selectFingerprintPreset(_:)), keyEquivalent: "")
         offItem.target = self
         offItem.representedObject = FingerprintCatalog.offPresetID
@@ -2408,10 +2408,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         }
 
         menu.addItem(NSMenuItem.separator())
-        let randomizeItem = menu.addItem(withTitle: "重新随机化（当前空间）", action: #selector(randomizeCurrentFingerprint(_:)), keyEquivalent: "")
+        let randomizeItem = menu.addItem(withTitle: "Randomize Again (Current Profile)", action: #selector(randomizeCurrentFingerprint(_:)), keyEquivalent: "")
         randomizeItem.target = self
         menu.addItem(NSMenuItem.separator())
-        let aboutItem = menu.addItem(withTitle: "关于指纹混淆…", action: #selector(showFingerprintAbout(_:)), keyEquivalent: "")
+        let aboutItem = menu.addItem(withTitle: "About Fingerprint Obfuscation…", action: #selector(showFingerprintAbout(_:)), keyEquivalent: "")
         aboutItem.target = self
     }
 
@@ -2473,10 +2473,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
             return true
         }
         let alert = NSAlert()
-        alert.messageText = "无法新建账号空间"
-        alert.informativeText = "多账号隔离需要 macOS 14 或更新版本。当前系统版本只支持内置空间和无痕窗口。"
+        alert.messageText = "Cannot Create Profile"
+        alert.informativeText = "Multiple isolated profiles require macOS 14 or later. This system supports only the built-in profile and private windows."
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "知道了")
+        alert.addButton(withTitle: "OK")
         alert.runModal()
         return false
     }
@@ -2487,11 +2487,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
             return false
         }
         guard !ProfileStore.metadataRecoveryRequired else {
-            presentError("账号空间配置无法读取；原始配置已保留。请先恢复有效的空间配置后再修改账号空间。")
+            presentError("Cannot read profile settings. The original configuration was preserved. Restore valid settings before changing profiles.")
             return false
         }
         guard ProfileStore.pendingDataMutation == nil else {
-            presentError("上一次空间数据操作仍在恢复；当前写操作已暂停，请等待恢复完成。")
+            presentError("The previous profile data operation is still recovering. Writes are paused; wait for recovery to finish.")
             return false
         }
         return true
@@ -2499,14 +2499,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
 
     private func updateWebRTCProtectionMenuItem() {
         webRTCProtectionItem?.title = PrivacySettings.isWebRTCProtectionEnabled()
-            ? "关闭 WebRTC 防护"
-            : "启用 WebRTC 防护"
+            ? "Disable WebRTC Protection"
+            : "Enable WebRTC Protection"
         webRTCProtectionItem?.state = .off
     }
 
     private func updateEnhancedPrivacyMenuItem() {
         let currentID = ProfileStore.currentProfileID()
-        enhancedPrivacyItem?.title = "增强隐私模式（当前空间）"
+        enhancedPrivacyItem?.title = "Enhanced Privacy (Current Profile)"
         enhancedPrivacyItem?.state = ProfileStore.isEnhancedPrivacyEnabled(for: currentID) ? .on : .off
     }
 
@@ -2521,7 +2521,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
 
         guard ProfileStore.loadProfiles().contains(where: { $0.id == newProfile.id }) else {
             profileMutationInProgress = false
-            presentError("克隆空间失败：空间配置无法保存。")
+            presentError("Could not clone profile: settings could not be saved.")
             return
         }
 
@@ -2538,7 +2538,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
                   ProfileStore.loadProfiles().contains(where: { $0.id == newProfile.id }) else {
                 self.profileMutationInProgress = false
                 self.applyCurrentCookiePreferenceAfterMutation()
-                self.presentError("克隆空间未完成；目标空间已不存在或配置需要恢复。")
+                self.presentError("Profile cloning did not finish: the target profile no longer exists or settings need recovery.")
                 return false
             }
             ProfileStore.setCurrentProfileID(newProfile.id)
@@ -2556,14 +2556,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
 
         controller.copyCookies(toProfileID: newProfile.id) { [weak self] count, skippedCount, essentialSkipped in
             if switchToNewProfile() {
-                let skippedText = skippedCount > 0 ? "，为避免请求头过大跳过 \(skippedCount) 个 cookie" : ""
+                let skippedText = skippedCount > 0 ? ", skipped \(skippedCount) cookies to avoid oversized request headers" : ""
                 if essentialSkipped {
                     self?.presentAlert(
-                        "已创建空间「\(name)」，复制了 \(count) 个 cookie\(skippedText)，但关键登录 cookie 过大或超出请求头上限，登录态未完整复制。",
+                        "Created profile “\(name)” and copied \(count) cookies\(skippedText), but essential login cookies exceeded the size or request header limit. The login session was not fully copied.",
                         style: .warning
                     )
                 } else {
-                    self?.presentInfo("已克隆空间「\(name)」，并复制 \(count) 个 cookie\(skippedText)。")
+                    self?.presentInfo("Cloned profile “\(name)” and copied \(count) cookies\(skippedText).")
                 }
             }
         }
@@ -2588,9 +2588,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
             encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
             let data = try encoder.encode(document)
             try BrowserDataBoundary.writeSensitiveData(data, to: url)
-            presentInfo("已导出当前空间配置到 \(url.lastPathComponent)。")
+            presentInfo("Exported profile settings to \(url.lastPathComponent).")
         } catch {
-            presentError("Profile 导出失败：\(error.localizedDescription)")
+            presentError("Profile export failed: \(error.localizedDescription)")
         }
     }
 
@@ -2602,7 +2602,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
                 throw NSError(
                     domain: "ChatGPTSwiftWeb.ProfileImport",
                     code: 1,
-                    userInfo: [NSLocalizedDescriptionKey: "Profile 文件过大"]
+                    userInfo: [NSLocalizedDescriptionKey: "Profile file is too large"]
                 )
             }
             let data = try Data(contentsOf: url, options: .mappedIfSafe)
@@ -2610,15 +2610,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
             decoder.dateDecodingStrategy = .iso8601
             let document = try decoder.decode(ProfileExportDocument.self, from: data)
             guard document.schemaVersion == 1 else {
-                presentError("Profile JSON 版本不支持。")
+                presentError("Unsupported profile JSON version.")
                 return
             }
             guard Self.isValidImportedProfileDocument(document) else {
-                presentError("Profile JSON 包含无效或超出范围的配置。")
+                presentError("Profile JSON contains invalid or out-of-range settings.")
                 return
             }
 
-            let name = uniqueProfileName(document.name.isEmpty ? "导入空间" : document.name)
+            let name = uniqueProfileName(document.name.isEmpty ? "Imported Profile" : document.name)
             let profile = WebProfile(id: UUID().uuidString, name: name, createdAt: Date())
             var profiles = ProfileStore.loadProfiles()
             profiles.append(profile)
@@ -2637,9 +2637,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
             ProfileStore.setCurrentProfileID(profile.id)
             updateWebRTCProtectionMenuItem()
             rebuildMainController()
-            presentInfo("已导入空间配置「\(name)」。")
+            presentInfo("Imported profile settings for “\(name)”.")
         } catch {
-            presentError("Profile 导入失败：\(error.localizedDescription)")
+            presentError("Profile import failed: \(error.localizedDescription)")
         }
     }
 
@@ -2670,7 +2670,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         let safeTrimmed = String(trimmed.prefix(256))
         let base = safeTrimmed.isEmpty
             || safeTrimmed.unicodeScalars.contains(where: CharacterSet.controlCharacters.contains)
-            ? "新空间"
+            ? "New Profile"
             : safeTrimmed
         let profiles = ProfileStore.loadProfiles()
         if !Self.profileNameExists(base, in: profiles, excluding: nil) {
@@ -2698,7 +2698,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
     private func presentAlert(_ text: String, style: NSAlert.Style) {
         let safeText = DiagnosticRedactor.text(text)
         (BrowserWindowController.keyWindowController() ?? mainController)?.showToast(
-            safeText, actionTitle: style == .warning ? "复制诊断信息" : nil,
+            safeText, actionTitle: style == .warning ? "Copy Diagnostics" : nil,
             action: {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(safeText, forType: .string)
@@ -2710,8 +2710,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         alert.messageText = title
         alert.informativeText = message
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "前往")
-        alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: "Go")
+        alert.addButton(withTitle: "Cancel")
         let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 360, height: 24))
         textField.stringValue = initial
         textField.placeholderString = "https://example.com"
@@ -2726,10 +2726,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         }
         guard let url = Self.validatedExternalURL(trimmed) else {
             let warn = NSAlert()
-            warn.messageText = "网址无效"
-            warn.informativeText = "请输入完整的 https:// 网址，例如 https://example.com。仅支持 https，明文 http 已拒绝。"
+            warn.messageText = "Invalid URL"
+            warn.informativeText = "Enter a complete https:// URL, such as https://example.com. Only HTTPS is supported; unencrypted HTTP is blocked."
             warn.alertStyle = .warning
-            warn.addButton(withTitle: "知道了")
+            warn.addButton(withTitle: "OK")
             warn.runModal()
             completion(nil)
             return
@@ -2745,11 +2745,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         let alert = NSAlert()
         alert.messageText = title
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "确定")
-        alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: "Cancel")
         let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
         textField.stringValue = initial
-        textField.placeholderString = "例如：工作号 / 私人号"
+        textField.placeholderString = "For example: Work / Personal"
         alert.accessoryView = textField
         alert.window.initialFirstResponder = textField
 

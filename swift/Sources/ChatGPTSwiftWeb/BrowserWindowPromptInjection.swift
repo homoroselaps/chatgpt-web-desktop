@@ -5,28 +5,28 @@ extension BrowserWindowController {
     func focusPromptComposer(completion: ((String?) -> Void)? = nil) {
         guard !isDisposing, ProfileStore.pendingDataMutation == nil,
               Self.canInjectPromptContent(into: webView.url) else {
-            completion?("请先打开 ChatGPT 页面")
+            completion?("Open a ChatGPT page first")
             return
         }
         show()
-        setStatus("正在聚焦输入框…", showsProgress: true)
+        setStatus("Focusing input…", showsProgress: true)
         focusPromptComposer(attemptsRemaining: 8, completion: completion)
     }
 
     func insertTextIntoPrompt(_ text: String, completion: @escaping (String?) -> Void) {
         guard !isDisposing, ProfileStore.pendingDataMutation == nil,
               Self.canInjectPromptContent(into: webView.url) else {
-            completion("为保护本机内容，只能向 ChatGPT 页面插入文本")
+            completion("To protect local content, text can only be inserted into ChatGPT pages")
             return
         }
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            completion("没有可插入的文本")
+            completion("No text to insert")
             return
         }
 
         show()
-        setStatus("正在插入上下文…", showsProgress: false)
+        setStatus("Inserting context…", showsProgress: false)
         insertTextIntoPrompt(trimmed, attemptsRemaining: 8, completion: completion)
     }
 
@@ -37,7 +37,7 @@ extension BrowserWindowController {
     ) {
         guard !isDisposing, ProfileStore.pendingDataMutation == nil,
               Self.canInjectPromptContent(into: webView.url) else {
-            completion("页面已经离开 ChatGPT，已取消插入")
+            completion("Insertion canceled because the page has left ChatGPT")
             return
         }
         webView.evaluateJavaScript(Self.insertPromptTextScript(text: text)) { [weak self] result, error in
@@ -45,7 +45,7 @@ extension BrowserWindowController {
                 return
             }
             guard !self.isDisposing, ProfileStore.pendingDataMutation == nil else {
-                completion("空间正在清理，已取消插入")
+                completion("Insertion canceled while the profile is being cleared")
                 return
             }
             if let error {
@@ -55,7 +55,7 @@ extension BrowserWindowController {
                     }
                     return
                 }
-                completion("插入失败：\(error.localizedDescription)")
+                completion("Insertion failed: \(error.localizedDescription)")
                 return
             }
 
@@ -67,7 +67,7 @@ extension BrowserWindowController {
                     }
                     return
                 }
-                completion("未找到 ChatGPT 输入框")
+                completion("ChatGPT input box not found")
                 return
             }
 
@@ -78,8 +78,8 @@ extension BrowserWindowController {
     private func focusPromptComposer(attemptsRemaining: Int, completion: ((String?) -> Void)? = nil) {
         guard !isDisposing, ProfileStore.pendingDataMutation == nil,
               Self.canInjectPromptContent(into: webView.url) else {
-            setStatus("请先打开 ChatGPT 页面", showsProgress: false)
-            completion?("请先打开 ChatGPT 页面")
+            setStatus("Open a ChatGPT page first", showsProgress: false)
+            completion?("Open a ChatGPT page first")
             return
         }
         webView.evaluateJavaScript(Self.focusPromptComposerScript) { [weak self] result, error in
@@ -87,35 +87,35 @@ extension BrowserWindowController {
                 return
             }
             guard !self.isDisposing, ProfileStore.pendingDataMutation == nil else {
-                completion?("空间正在清理，已取消聚焦")
+                completion?("Focus canceled while the profile is being cleared")
                 return
             }
             if let error {
                 if attemptsRemaining > 0 {
-                    self.setStatus("等待 ChatGPT 输入框…", showsProgress: true)
+                    self.setStatus("Waiting for ChatGPT input…", showsProgress: true)
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                         self.focusPromptComposer(attemptsRemaining: attemptsRemaining - 1, completion: completion)
                     }
                     return
                 }
-                self.setStatus("聚焦输入框失败", showsProgress: false)
-                completion?("聚焦输入框失败：\(error.localizedDescription)")
+                self.setStatus("Could not focus input", showsProgress: false)
+                completion?("Could not focus input: \(error.localizedDescription)")
                 return
             }
             guard let report = result as? [String: Any],
                   Self.promptBoolValue(report["ok"]) else {
                 if attemptsRemaining > 0 {
-                    self.setStatus("等待 ChatGPT 输入框…", showsProgress: true)
+                    self.setStatus("Waiting for ChatGPT input…", showsProgress: true)
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                         self.focusPromptComposer(attemptsRemaining: attemptsRemaining - 1, completion: completion)
                     }
                     return
                 }
-                self.setStatus("未找到输入框", showsProgress: false)
-                completion?("未找到 ChatGPT 输入框")
+                self.setStatus("Input box not found", showsProgress: false)
+                completion?("ChatGPT input box not found")
                 return
             }
-            self.setStatus("输入框已聚焦", showsProgress: false)
+            self.setStatus("Input focused", showsProgress: false)
             completion?(nil)
         }
     }

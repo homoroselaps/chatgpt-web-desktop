@@ -6,20 +6,20 @@ import WebKit
 /// non-sensitive health signals. It deliberately does not solve or bypass challenges.
 extension BrowserWindowController {
     func cloudflareDiagnosticsSummary() -> String {
-        let state = isCloudflareChallengeActive ? "挑战进行中" : "空闲"
+        let state = isCloudflareChallengeActive ? "Challenge in progress" : "Idle"
         let network = NetworkStatusMonitor.shared.availability.title + " · " + NetworkStatusMonitor.shared.interfaceDescription
         let eventTime = cloudflareLastEventAt.map { date in
             let formatter = ISO8601DateFormatter()
             formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
             return formatter.string(from: date)
-        } ?? "无"
+        } ?? "None"
         return [
-            "状态：" + state,
-            "挑战：" + String(cloudflareChallengeCount) + " 次，已完成 " + String(cloudflareChallengeResolvedCount) + " 次，循环 " + String(cloudflareChallengeLoopCount) + " 次",
-            "最近事件：HTTP " + cloudflareLastHTTPStatus + "，Ray ID " + cloudflareLastRayID + "，" + eventTime,
-            "挑战 Cookie：" + cloudflareChallengeCookieStatus,
-            "出口采样：" + cloudflareEgressStatus + "（采样 " + String(cloudflareEgressSampleCount) + " 次）",
-            "网络：" + network,
+            "Status: " + state,
+            "Challenges: " + String(cloudflareChallengeCount) + " times, completed " + String(cloudflareChallengeResolvedCount) + " times, loops " + String(cloudflareChallengeLoopCount) + " times",
+            "Latest event: HTTP " + cloudflareLastHTTPStatus + ", Ray ID " + cloudflareLastRayID + ", " + eventTime,
+            "Challenge Cookies: " + cloudflareChallengeCookieStatus,
+            "Egress Sample: " + cloudflareEgressStatus + " (sampled " + String(cloudflareEgressSampleCount) + " times)",
+            "Network: " + network,
         ].joined(separator: "\n")
     }
 
@@ -32,7 +32,7 @@ extension BrowserWindowController {
             }
             cloudflareLastRayID = String(String.UnicodeScalarView(safeRayID).prefix(128))
         } else {
-            cloudflareLastRayID = "缺失"
+            cloudflareLastRayID = "Missing"
         }
         sampleCloudflareEgressIfNeeded()
     }
@@ -75,7 +75,7 @@ extension BrowserWindowController {
         isCloudflareChallengeActive = false
         cloudflareChallengeResolvedCount += 1
         cloudflareChallengeStartedAt = nil
-        cloudflareChallengeLastReason = "已完成"
+        cloudflareChallengeLastReason = "Completed"
         cancelCloudflareChallengeWatchdog()
         refreshCloudflareChallengeCookieStatus()
         updateNativeChromeStatus()
@@ -95,7 +95,7 @@ extension BrowserWindowController {
     func noteCloudflareNetworkChange() {
         guard isCloudflareChallengeActive else { return }
         cloudflareChallengeLoopCount += 1
-        cloudflareChallengeLastReason = "网络接口发生变化；请保持当前网络不变"
+        cloudflareChallengeLastReason = "Network interface changed; keep the current network unchanged"
         refreshCloudflareChallengeCookieStatus()
         scheduleCloudflareChallengeWatchdog()
         updateNativeChromeStatus()
@@ -118,7 +118,7 @@ extension BrowserWindowController {
                   !self.isDisposing,
                   self.cloudflareChallengeWatchdogGeneration == expected,
                   self.isCloudflareChallengeActive else { return }
-            self.cloudflareChallengeLastReason = "等待超过 12 秒；保持当前网络和窗口不变"
+            self.cloudflareChallengeLastReason = "Waiting more than 12 seconds; keep the current network and window unchanged"
             self.refreshCloudflareChallengeCookieStatus()
             self.updateNativeChromeStatus()
         }
@@ -162,7 +162,7 @@ extension BrowserWindowController {
 
         guard let url = URL(string: "https://cloudflare.com/cdn-cgi/trace") else {
             cloudflareEgressSampleInFlight = false
-            cloudflareEgressStatus = "采样地址不可用"
+            cloudflareEgressStatus = "Sample URL unavailable"
             return
         }
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 4)
@@ -182,7 +182,7 @@ extension BrowserWindowController {
                 DispatchQueue.main.async {
                     guard let self, !self.isDisposing else { return }
                     self.cloudflareEgressSampleInFlight = false
-                    self.cloudflareEgressStatus = "采样失败（不读取 Cookie）"
+                    self.cloudflareEgressStatus = "Sampling failed (cookies are not read)"
                     self.updateNativeChromeStatus()
                 }
                 return
@@ -197,7 +197,7 @@ extension BrowserWindowController {
                 DispatchQueue.main.async {
                     guard !self.isDisposing else { return }
                     self.cloudflareEgressSampleInFlight = false
-                    self.cloudflareEgressStatus = "采样结果缺少出口信息"
+                    self.cloudflareEgressStatus = "Sample has no egress information"
                     self.updateNativeChromeStatus()
                 }
                 return
@@ -210,13 +210,13 @@ extension BrowserWindowController {
                 guard !self.isDisposing else { return }
                 let changed: String
                 if let previous = self.cloudflareLastEgressFingerprint {
-                    changed = previous == fingerprint ? "出口未变化" : "出口已变化"
+                    changed = previous == fingerprint ? "Egress unchanged" : "Egress changed"
                 } else {
-                    changed = "已建立出口基线"
+                    changed = "Egress baseline established"
                 }
                 self.cloudflareLastEgressFingerprint = fingerprint
                 self.cloudflareEgressSampleInFlight = false
-                self.cloudflareEgressStatus = changed + "；位置 " + (location.isEmpty ? "未知" : location)
+                self.cloudflareEgressStatus = changed + "; location " + (location.isEmpty ? "Unknown" : location)
                 self.updateNativeChromeStatus()
             }
         }.resume()

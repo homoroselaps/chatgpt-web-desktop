@@ -12,7 +12,7 @@ final class DownloadCenterWindowController: NSWindowController {
         self.profileID = profileID
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 570, height: 440),
                               styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
-        window.title = "下载中心"
+        window.title = "Download Center"
         window.minSize = NSSize(width: 450, height: 300)
         window.isReleasedWhenClosed = false
         super.init(window: window)
@@ -29,7 +29,7 @@ final class DownloadCenterWindowController: NSWindowController {
         rows.edgeInsets = NSEdgeInsets(top: 16, left: 18, bottom: 18, right: 18)
         rows.translatesAutoresizingMaskIntoConstraints = false
         document.addSubview(rows)
-        let clear = NSButton(title: "清除已结束的记录", target: self, action: #selector(clearHistory))
+        let clear = NSButton(title: "Clear Finished Downloads", target: self, action: #selector(clearHistory))
         clear.bezelStyle = .rounded
         clear.translatesAutoresizingMaskIntoConstraints = false
         guard let content = window.contentView else { return }
@@ -63,7 +63,7 @@ final class DownloadCenterWindowController: NSWindowController {
         }
         rows.arrangedSubviews.forEach { rows.removeArrangedSubview($0); $0.removeFromSuperview() }
         if records.isEmpty {
-            rows.addArrangedSubview(NSTextField(wrappingLabelWithString: "暂无下载。完成的文件保存在“下载”文件夹，最近 20 项记录会显示在这里。"))
+            rows.addArrangedSubview(NSTextField(wrappingLabelWithString: "No downloads yet. Completed files are saved in Downloads. The latest 20 records appear here."))
         }
         for record in records {
             let row = DownloadRow(record: record, center: center)
@@ -85,9 +85,9 @@ private final class DownloadRow: NSStackView {
     private let title = NSTextField(wrappingLabelWithString: "")
     private let status = NSTextField(wrappingLabelWithString: "")
     private let progress = NSProgressIndicator()
-    private let reveal = NSButton(title: "在 Finder 中显示", target: nil, action: nil)
-    private let copy = NSButton(title: "复制路径", target: nil, action: nil)
-    private let retry = NSButton(title: "重试", target: nil, action: nil)
+    private let reveal = NSButton(title: "Show in Finder", target: nil, action: nil)
+    private let copy = NSButton(title: "Copy Path", target: nil, action: nil)
+    private let retry = NSButton(title: "Retry", target: nil, action: nil)
 
     init(record: DownloadRecord, center: DownloadCenter) {
         id = record.id
@@ -115,7 +115,7 @@ private final class DownloadRow: NSStackView {
             button.bezelStyle = .rounded
             button.target = self
             button.action = selector
-            button.setAccessibilityLabel("\(button.title)：\(record.filename)")
+            button.setAccessibilityLabel("\(button.title): \(record.filename)")
         }
         title.widthAnchor.constraint(equalTo: widthAnchor).isActive = true
         status.widthAnchor.constraint(equalTo: widthAnchor).isActive = true
@@ -131,10 +131,10 @@ private final class DownloadRow: NSStackView {
         title.stringValue = record.filename
         switch record.state {
         case .downloading:
-            status.stringValue = record.progress.map { "正在下载 \(Int($0 * 100))%" } ?? "正在下载…"
-        case .completed: status.stringValue = "已完成"
-        case .failed: status.stringValue = record.errorMessage ?? "下载失败"
-        case .canceled: status.stringValue = "下载已停止，请回原页面重新下载"
+            status.stringValue = record.progress.map { "Downloading \(Int($0 * 100))%" } ?? "Downloading…"
+        case .completed: status.stringValue = "Completed"
+        case .failed: status.stringValue = record.errorMessage ?? "Download failed"
+        case .canceled: status.stringValue = "Download stopped. Return to the original page to download again"
         }
         progress.isHidden = record.state != .downloading
         progress.isIndeterminate = record.progress == nil
@@ -147,14 +147,14 @@ private final class DownloadRow: NSStackView {
 
     @objc private func revealFile() {
         guard let path = record.path else { return }
-        guard FileManager.default.fileExists(atPath: path) else { status.stringValue = "文件已移动或删除"; return }
+        guard FileManager.default.fileExists(atPath: path) else { status.stringValue = "File moved or deleted"; return }
         NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
     }
     @objc private func copyPath() {
         guard let path = record.path else { return }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(path, forType: .string)
-        status.stringValue = "路径已复制"
+        status.stringValue = "Path copied"
     }
     @objc private func retryDownload() { _ = center.retry(id: id) }
 }

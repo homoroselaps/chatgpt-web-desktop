@@ -92,7 +92,7 @@ final class ProcessPerformanceMonitor {
     func diagnosticRows() -> [(String, String)] {
         let snapshot = snapshotSamples()
         guard !snapshot.isEmpty else {
-            return [("性能采样", "暂无样本")]
+            return [("Performance Samples", "No samples yet")]
         }
 
         let latest = snapshot[snapshot.count - 1]
@@ -100,10 +100,10 @@ final class ProcessPerformanceMonitor {
         let residentValues = snapshot.map(\.residentBytes)
         let footprintValues = snapshot.map(\.footprintBytes)
         return [
-            ("性能采样窗口", "\(snapshot.count) 个样本，\(Self.dateText(snapshot[0].timestamp)) → \(Self.dateText(latest.timestamp))"),
-            ("CPU 当前 / 平均 / 峰值", "\(Self.percentText(latest.cpuPercent)) / \(Self.percentText(Self.average(cpuValues))) / \(Self.percentText(cpuValues.max() ?? 0))"),
-            ("RSS 当前 / 平均 / 峰值", "\(Self.bytesText(latest.residentBytes)) / \(Self.bytesText(Self.average(residentValues))) / \(Self.bytesText(residentValues.max() ?? 0))"),
-            ("Footprint 当前 / 平均 / 峰值", "\(Self.bytesText(latest.footprintBytes)) / \(Self.bytesText(Self.average(footprintValues))) / \(Self.bytesText(footprintValues.max() ?? 0))"),
+            ("Performance Sampling Window", "\(snapshot.count) samples, \(Self.dateText(snapshot[0].timestamp)) → \(Self.dateText(latest.timestamp))"),
+            ("CPU Current / Average / Peak", "\(Self.percentText(latest.cpuPercent)) / \(Self.percentText(Self.average(cpuValues))) / \(Self.percentText(cpuValues.max() ?? 0))"),
+            ("RSS Current / Average / Peak", "\(Self.bytesText(latest.residentBytes)) / \(Self.bytesText(Self.average(residentValues))) / \(Self.bytesText(residentValues.max() ?? 0))"),
+            ("Footprint Current / Average / Peak", "\(Self.bytesText(latest.footprintBytes)) / \(Self.bytesText(Self.average(footprintValues))) / \(Self.bytesText(footprintValues.max() ?? 0))"),
         ]
     }
 
@@ -196,7 +196,7 @@ final class ProcessPerformanceMonitor {
 
     private static func bytesText(_ bytes: UInt64) -> String {
         guard bytes > 0 else {
-            return "未知"
+            return "Unknown"
         }
         let mib = Double(bytes) / 1_048_576
         return String(format: "%.1f MiB", mib)

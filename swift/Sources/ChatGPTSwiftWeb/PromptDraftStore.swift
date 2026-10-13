@@ -28,9 +28,9 @@ enum PromptDraftStore {
         let prefix = draftKey(profileID: profileID)
         let count = UserDefaults.standard.dictionaryRepresentation().filter { $0.key == prefix || $0.key.hasPrefix(prefix + ".") }.values.compactMap { $0 as? String }.reduce(0) { $0 + $1.count }
         guard count > 0 else {
-            return "无"
+            return "None"
         }
-        return "\(count) 个字符，按会话保存在本机"
+        return "\(count) characters, saved locally per conversation"
     }
 
     static func saveDraft(_ rawText: String, profileID: String?, defaults: UserDefaults = .standard) {

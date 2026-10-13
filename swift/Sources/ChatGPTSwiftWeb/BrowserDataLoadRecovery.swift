@@ -8,7 +8,7 @@ struct BrowserDataLoadState {
     var verificationPath = "/backend-api/models"
     var responseStatus: [String: Int] = [:]
     var hasFailure: Bool { requiresVerification || !failures.isEmpty }
-    var summary: String { failures.isEmpty ? "ChatGPT 数据" : failures.joined(separator: "、") }
+    var summary: String { failures.isEmpty ? "ChatGPT data" : failures.joined(separator: ", ") }
 }
 
 extension BrowserWindowController {
@@ -32,7 +32,7 @@ extension BrowserWindowController {
     }
 
     func updateDataLoadState(failures: [String: Bool], challenged: Bool? = nil) {
-        dataLoadState.failures = [("account", "账户"), ("models", "模型"), ("history", "历史记录"), ("projects", "项目")]
+        dataLoadState.failures = [("account", "Account"), ("models", "Models"), ("history", "History"), ("projects", "Projects")]
             .compactMap { failures[$0.0] == true ? $0.1 : nil }
         if let challenged { dataLoadState.requiresVerification = challenged }
         if failures["models"] == true, !modelLoadFailureActive {
@@ -80,17 +80,17 @@ extension BrowserWindowController {
         guard !isDisposing, !webView.isLoading, !hasFailedNavigation,
               !isCloudflareChallengeActive, Self.canInjectPromptContent(into: webView.url) else { return }
         if dataVerificationReloadURL != nil || (dataLoadState.requiresVerification && isAssistantResponseInProgress) {
-            showDataLoadOverlay(.verifying("回答结束后将自动继续，当前输入会保留。"))
+            showDataLoadOverlay(.verifying("Will continue automatically after the reply finishes. Your input will be preserved."))
             return
         }
         if dataLoadState.requiresVerification && dataVerificationAutoOpenWorkItem != nil {
-            showDataLoadOverlay(.verifying("正在打开安全验证，完成后自动继续。"))
+            showDataLoadOverlay(.verifying("Opening security verification. Will continue automatically when complete."))
             return
         }
         if dataLoadState.hasFailure {
             let detail = dataLoadState.requiresVerification
-                ? "安全验证拦截了数据请求。完成验证后会自动重新加载，保留当前输入。"
-                : "\(dataLoadState.summary)未能加载。重新加载会保留当前输入。"
+                ? "Security verification blocked data requests. The page will reload automatically after verification, preserving your input."
+                : "Could not load \(dataLoadState.summary). Reloading will preserve your input."
             showDataLoadOverlay(.dataLoadFailed(detail, verification: dataLoadState.requiresVerification))
         } else {
             hideDataLoadOverlay()
@@ -103,7 +103,7 @@ extension BrowserWindowController {
         guard !isAssistantResponseInProgress else {
             if !dataLoadState.requiresVerification { dataVerificationReloadURL = webView.url }
             updateDataLoadOverlay()
-            showToast("回答结束后会自动继续加载，当前输入会保留")
+            showToast("Loading will continue after the reply finishes. Your input will be preserved")
             return
         }
         if dataLoadState.requiresVerification { openDataVerificationWindow() }
@@ -133,7 +133,7 @@ extension BrowserWindowController {
             WKUserScript(source: $0.source, injectionTime: $0.injectionTime, forMainFrameOnly: false)
         }
         shims.forEach { configuration.userContentController.addUserScript($0) }
-        let child = BrowserWindowController(initialURL: nil, title: "完成 ChatGPT 安全验证", isPopup: true,
+        let child = BrowserWindowController(initialURL: nil, title: "Complete ChatGPT Security Verification", isPopup: true,
                                             persistent: persistent, profileID: profileID, configuration: configuration)
         child.webView.customUserAgent = webView.customUserAgent
         child.dataVerificationURL = verificationURL
@@ -234,7 +234,7 @@ extension BrowserWindowController {
             guard self.dataRecoveryCapturePending, self.dataRecoveryCaptureGeneration == generation else { return }
             self.dataRecoveryCapturePending = false
             self.dataRecoveryCaptureGeneration += 1
-            self.showToast("暂时无法保存输入，当前页面已保留；稍后可再次重试")
+            self.showToast("Cannot save input right now. The current page is preserved; try again later")
         }
         capturePageState { [weak self] in
             guard let self, self.dataRecoveryCaptureGeneration == generation else { return }
@@ -255,12 +255,12 @@ extension BrowserWindowController {
                     return
                 }
                 guard error == nil else {
-                    self.showToast("暂时无法保存输入，当前页面已保留；稍后可再次重试")
+                    self.showToast("Cannot save input right now. The current page is preserved; try again later")
                     return
                 }
                 guard let snapshot = value as? [String: Any], let text = snapshot["text"] as? String,
                       snapshot["path"] as? String == original.path, text.count <= 200_000 else {
-                    self.showToast("无法完整保存输入，当前页面已保留")
+                    self.showToast("Cannot save all input. The current page is preserved")
                     return
                 }
                 guard self.refreshFeedback.beginRefresh() else { return }
@@ -283,7 +283,7 @@ extension BrowserWindowController {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in self?.restoreDataRecoveryDraft(attempt: attempt + 1) }
             } else {
                 // Keep this input in memory and offer an explicit retry if the composer is still absent.
-                self.showToast("输入已保留，输入框就绪后可恢复", actionTitle: "恢复输入", action: { [weak self] in self?.restoreDataRecoveryDraft() }, duration: 20)
+                self.showToast("Input preserved. Restore it once the input box is ready", actionTitle: "Restore Input", action: { [weak self] in self?.restoreDataRecoveryDraft() }, duration: 20)
             }
         }
     }

@@ -30,10 +30,10 @@ extension AppDelegate {
             return
         }
         guard BrowserWindowController.canInjectPromptContent(into: controller.currentURL()) else {
-            presentNotesContextError("为保护备忘录内容，请先在当前窗口打开 ChatGPT 页面。", for: controller)
+            presentNotesContextError("To protect note content, open a ChatGPT page in the current window first.", for: controller)
             return
         }
-        controller.setStatus("正在读取备忘录…", showsProgress: false)
+        controller.setStatus("Reading note…", showsProgress: false)
         NotesContextReader.readSelectedNote { result in
             DispatchQueue.main.async {
                 guard !self.profileMutationInProgress,
@@ -45,14 +45,14 @@ extension AppDelegate {
                 case .success(let context):
                     controller.insertTextIntoPrompt(context) { errorText in
                         if let errorText {
-                            controller.setStatus("上下文插入失败", showsProgress: false)
+                            controller.setStatus("Context insertion failed", showsProgress: false)
                             self.presentNotesContextError(errorText, for: controller)
                         } else {
-                            controller.setStatus("备忘录上下文已插入", showsProgress: false)
+                            controller.setStatus("Note context inserted", showsProgress: false)
                         }
                     }
                 case .failure(let error):
-                    controller.setStatus("备忘录上下文插入失败", showsProgress: false)
+                    controller.setStatus("Note context insertion failed", showsProgress: false)
                     self.presentNotesContextError(error, for: controller)
                 }
             }
@@ -64,6 +64,6 @@ extension AppDelegate {
     }
 
     private func presentNotesContextError(_ message: String, for controller: BrowserWindowController) {
-        controller.showToast("无法插入备忘录：" + message, actionTitle: "重试", action: { [weak self] in self?.insertNotesContextAction(nil) }, duration: 12)
+        controller.showToast("Could not insert note: " + message, actionTitle: "Retry", action: { [weak self] in self?.insertNotesContextAction(nil) }, duration: 12)
     }
 }

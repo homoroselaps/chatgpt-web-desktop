@@ -50,7 +50,7 @@ final class CookieImportParserTests: XCTestCase {
 
         let malicious = ".evil.example TRUE / TRUE 1893456000 cf_clearance clear"
         XCTAssertThrowsError(try CookieImportParser.parse(data: Data(malicious.utf8))) { error in
-            XCTAssertTrue(CookieImportParser.safeMessage(error).contains("不在 ChatGPT/OpenAI 白名单"))
+            XCTAssertTrue(CookieImportParser.safeMessage(error).contains("not on the ChatGPT/OpenAI allowlist"))
         }
     }
 
@@ -67,23 +67,23 @@ final class CookieImportParserTests: XCTestCase {
     func testRejectsOversizedImportAndExcessiveCookieCount() {
         let oversized = Data(repeating: 0x61, count: CookieImportParser.maximumImportBytes + 1)
         XCTAssertThrowsError(try CookieImportParser.parse(data: oversized)) { error in
-            XCTAssertTrue(CookieImportParser.safeMessage(error).contains("文件过大"))
+            XCTAssertTrue(CookieImportParser.safeMessage(error).contains("file is too large"))
         }
 
         let manyCookies = (0...CookieImportParser.maximumCookieCount).map { "name\($0)=value\($0)" }.joined(separator: ";")
         XCTAssertThrowsError(try CookieImportParser.parse(data: Data(manyCookies.utf8))) { error in
-            XCTAssertTrue(CookieImportParser.safeMessage(error).contains("数量超过"))
+            XCTAssertTrue(CookieImportParser.safeMessage(error).contains("count exceeds"))
         }
     }
 
     func testRejectsOversizedCookieFieldsAndControlCharacters() {
         let oversizedValue = String(repeating: "x", count: CookieImportParser.maximumCookieValueBytes + 1)
         XCTAssertThrowsError(try CookieImportParser.parse(data: Data("session=\(oversizedValue)".utf8))) { error in
-            XCTAssertTrue(CookieImportParser.safeMessage(error).contains("字段过大"))
+            XCTAssertTrue(CookieImportParser.safeMessage(error).contains("field is too large"))
         }
 
         XCTAssertThrowsError(try CookieImportParser.parse(data: Data("session=ok\u{0001}".utf8))) { error in
-            XCTAssertTrue(CookieImportParser.safeMessage(error).contains("控制字符"))
+            XCTAssertTrue(CookieImportParser.safeMessage(error).contains("control characters"))
         }
     }
 

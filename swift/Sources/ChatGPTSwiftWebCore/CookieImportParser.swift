@@ -67,16 +67,16 @@ public enum CookieImportParser {
 
     public static func parse(data: Data) throws -> [HTTPCookie] {
         guard data.count <= maximumImportBytes else {
-            throw cookieImportError("Cookie 文件过大")
+            throw cookieImportError("Cookie file is too large")
         }
         guard let text = String(data: data, encoding: .utf8) else {
-            throw cookieImportError("Cookie 文件必须是 UTF-8 文本")
+            throw cookieImportError("Cookie file must be UTF-8 text")
         }
 
         let normalizedText = text.removingUTF8ByteOrderMark()
         let trimmedText = normalizedText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedText.isEmpty else {
-            throw cookieImportError("没有可导入的 cookie")
+            throw cookieImportError("No cookies to import")
         }
 
         let exportedCookies: [CookieImportRecord]
@@ -89,12 +89,12 @@ public enum CookieImportParser {
         }
 
         guard exportedCookies.count <= maximumCookieCount else {
-            throw cookieImportError("Cookie 数量超过 \(maximumCookieCount) 个上限")
+            throw cookieImportError("Cookie count exceeds the limit of \(maximumCookieCount)")
         }
 
         let cookies = try exportedCookies.map { try $0.makeCookie() }
         guard !cookies.isEmpty else {
-            throw cookieImportError("没有可导入的 cookie")
+            throw cookieImportError("No cookies to import")
         }
         return cookies
     }
@@ -127,13 +127,13 @@ public enum CookieImportParser {
         if let decodingError = error as? DecodingError {
             switch decodingError {
             case .dataCorrupted:
-                return "JSON 内容无效"
+                return "Invalid JSON content"
             case .keyNotFound:
-                return "JSON 缺少必要字段"
+                return "Missing required JSON fields"
             case .typeMismatch, .valueNotFound:
-                return "JSON 字段类型不匹配"
+                return "JSON field type mismatch"
             @unknown default:
-                return "JSON 解析失败"
+                return "Could not parse JSON"
             }
         }
 
@@ -188,16 +188,16 @@ public enum CookieImportParser {
 
             let fields = splitCookieFields(line, maxSplits: 6)
             guard fields.count >= 7 else {
-                throw cookieImportError("Netscape 第 \(lineIndex + 1) 行字段不足")
+                throw cookieImportError("Not enough fields on Netscape line \(lineIndex + 1)")
             }
             guard let includeSubdomains = parseNetscapeBoolean(fields[1]) else {
-                throw cookieImportError("Netscape 第 \(lineIndex + 1) 行 includeSubdomains 无效")
+                throw cookieImportError("Invalid includeSubdomains on Netscape line \(lineIndex + 1)")
             }
             guard let secure = parseNetscapeBoolean(fields[3]) else {
-                throw cookieImportError("Netscape 第 \(lineIndex + 1) 行 secure 无效")
+                throw cookieImportError("Invalid secure field on Netscape line \(lineIndex + 1)")
             }
             guard let expires = Double(fields[4]) else {
-                throw cookieImportError("Netscape 第 \(lineIndex + 1) 行 expires 无效")
+                throw cookieImportError("Invalid expires field on Netscape line \(lineIndex + 1)")
             }
 
             let isSession = expires <= 0
@@ -218,7 +218,7 @@ public enum CookieImportParser {
         }
 
         guard !cookies.isEmpty else {
-            throw cookieImportError("没有可导入的 cookie")
+            throw cookieImportError("No cookies to import")
         }
         return cookies
     }
@@ -244,7 +244,7 @@ public enum CookieImportParser {
         }
 
         guard !cookies.isEmpty else {
-            throw cookieImportError("没有可导入的 cookie")
+            throw cookieImportError("No cookies to import")
         }
         return cookies
     }
@@ -268,7 +268,7 @@ public enum CookieImportParser {
         }
 
         guard !cookies.isEmpty else {
-            throw cookieImportError("Header String 没有可导入的 cookie")
+            throw cookieImportError("No cookies to import from Header String")
         }
         return cookies
     }
@@ -277,13 +277,13 @@ public enum CookieImportParser {
         let segments = line.split(separator: ";", omittingEmptySubsequences: true)
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
         guard let first = segments.first, let separator = first.firstIndex(of: "=") else {
-            throw cookieImportError("Set-Cookie Header 无效")
+            throw cookieImportError("Invalid Set-Cookie header")
         }
 
         let name = String(first[..<separator]).trimmingCharacters(in: .whitespacesAndNewlines)
         let value = String(first[first.index(after: separator)...]).trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else {
-            throw cookieImportError("Set-Cookie Header cookie 名称为空")
+            throw cookieImportError("Empty cookie name in Set-Cookie header")
         }
 
         var domain = defaultHeaderCookieImportDomain
@@ -473,33 +473,33 @@ private struct CookieImportRecord: Codable {
         let cookiePath = path.isEmpty ? "/" : path
 
         guard !trimmedName.isEmpty else {
-            throw CookieImportParser.cookieImportError("cookie 名称为空")
+            throw CookieImportParser.cookieImportError("Cookie name is empty")
         }
         guard trimmedName.utf8.count <= CookieImportParser.maximumCookieNameBytes,
               value.utf8.count <= CookieImportParser.maximumCookieValueBytes,
               trimmedDomain.utf8.count <= CookieImportParser.maximumCookieDomainBytes,
               cookiePath.utf8.count <= CookieImportParser.maximumCookiePathBytes else {
-            throw CookieImportParser.cookieImportError("cookie 字段过大")
+            throw CookieImportParser.cookieImportError("Cookie field is too large")
         }
         let controlCharacters = CharacterSet.controlCharacters
         guard !trimmedName.unicodeScalars.contains(where: controlCharacters.contains),
               !value.unicodeScalars.contains(where: controlCharacters.contains),
               !trimmedDomain.unicodeScalars.contains(where: controlCharacters.contains),
               !cookiePath.unicodeScalars.contains(where: controlCharacters.contains) else {
-            throw CookieImportParser.cookieImportError("cookie 字段包含控制字符")
+            throw CookieImportParser.cookieImportError("Cookie field contains control characters")
         }
         guard !trimmedDomain.isEmpty else {
-            throw CookieImportParser.cookieImportError("cookie 域名为空")
+            throw CookieImportParser.cookieImportError("Cookie domain is empty")
         }
         guard CookieImportParser.isAllowedDomain(trimmedDomain) else {
-            throw CookieImportParser.cookieImportError("cookie 域名不在 ChatGPT/OpenAI 白名单中：\(trimmedDomain)")
+            throw CookieImportParser.cookieImportError("Cookie domain is not on the ChatGPT/OpenAI allowlist: \(trimmedDomain)")
         }
         guard cookiePath.hasPrefix("/") else {
-            throw CookieImportParser.cookieImportError("cookie path 无效")
+            throw CookieImportParser.cookieImportError("Invalid cookie path")
         }
         guard !cookiePath.utf8.contains(0),
               !cookiePath.split(separator: "/").contains(where: { $0 == ".." }) else {
-            throw CookieImportParser.cookieImportError("cookie path 不安全")
+            throw CookieImportParser.cookieImportError("Unsafe cookie path")
         }
 
         var cookieAttributes: [HTTPCookiePropertyKey: Any] = [
@@ -524,7 +524,7 @@ private struct CookieImportRecord: Codable {
         }
 
         guard let result = HTTPCookie(properties: cookieAttributes) else {
-            throw CookieImportParser.cookieImportError("cookie 数据无法转换")
+            throw CookieImportParser.cookieImportError("Could not convert cookie data")
         }
 
         return result

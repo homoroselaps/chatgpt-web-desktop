@@ -17,7 +17,7 @@ public enum ProfileWindowTitle {
         }
 
         let trimmedName = profileName.trimmingCharacters(in: .whitespacesAndNewlines)
-        if isDefault && trimmedName == "默认" {
+        if isDefault && (trimmedName == "默认" || trimmedName == "Default") {
             return "ChatGPT Swift"
         }
 

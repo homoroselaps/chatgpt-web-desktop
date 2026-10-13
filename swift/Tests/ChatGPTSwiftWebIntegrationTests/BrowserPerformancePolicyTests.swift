@@ -75,7 +75,7 @@ final class BrowserPerformancePolicyTests: XCTestCase {
             BrowserWindowController.statusLocationText(for: try XCTUnwrap(URL(string: "about:blank"))),
             "about:"
         )
-        XCTAssertEqual(BrowserWindowController.statusLocationText(for: nil), "未载入")
+        XCTAssertEqual(BrowserWindowController.statusLocationText(for: nil), "Not loaded")
     }
 
     func testNormalToolbarStatusDoesNotExposeWebViewZoomAsLoadProgress() {

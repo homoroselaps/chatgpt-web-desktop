@@ -6,7 +6,7 @@ struct QuickWindowShortcut: Codable, Equatable {
     let modifiers: UInt
     let character: String
 
-    static let standard = QuickWindowShortcut(keyCode: 49, modifiers: NSEvent.ModifierFlags([.command, .shift]).rawValue, character: "空格")
+    static let standard = QuickWindowShortcut(keyCode: 49, modifiers: NSEvent.ModifierFlags([.command, .shift]).rawValue, character: "Space")
 
     var flags: NSEvent.ModifierFlags { NSEvent.ModifierFlags(rawValue: modifiers) }
     var isValid: Bool {
@@ -49,12 +49,12 @@ final class QuickWindowHotKey {
     private var registeredShortcut: QuickWindowShortcut?
     private var eventHandler: EventHandlerRef?
     var action: (() -> Void)?
-    private(set) var statusText = "未启用"
+    private(set) var statusText = "Disabled"
 
     @discardableResult
     func register(_ shortcut: QuickWindowShortcut) -> Bool {
         if shortcut == registeredShortcut, hotKey != nil { return true }
-        guard shortcut.isValid else { statusText = "请选择包含 ⌘、⌥ 或 ⌃ 的组合键"; return false }
+        guard shortcut.isValid else { statusText = "Choose a shortcut containing ⌘, ⌥, or ⌃"; return false }
         if eventHandler == nil {
             var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
             let status = InstallEventHandler(GetApplicationEventTarget(), { _, event, userData in
@@ -66,16 +66,16 @@ final class QuickWindowHotKey {
                 MainActor.assumeIsolated { owner.action?() }
                 return noErr
             }, 1, &eventType, Unmanaged.passUnretained(self).toOpaque(), &eventHandler)
-            guard status == noErr else { statusText = "快捷键服务不可用（\(status)）"; return false }
+            guard status == noErr else { statusText = "Shortcut service unavailable (\(status))"; return false }
         }
         var next: EventHotKeyRef?
         let result = RegisterEventHotKey(UInt32(shortcut.keyCode), shortcut.carbonModifiers,
                                         EventHotKeyID(signature: 0x43535751, id: 1), GetApplicationEventTarget(), 0, &next)
-        guard result == noErr else { statusText = "快捷键被占用或不可注册（\(result)），请换一个组合"; return false }
+        guard result == noErr else { statusText = "Shortcut is in use or cannot be registered (\(result)). Choose another combination"; return false }
         if let hotKey { UnregisterEventHotKey(hotKey) }
         hotKey = next
         registeredShortcut = shortcut
-        statusText = "已启用：\(shortcut.label)"
+        statusText = "Enabled: \(shortcut.label)"
         return true
     }
     func stop() {
@@ -84,7 +84,7 @@ final class QuickWindowHotKey {
         registeredShortcut = nil
         if let eventHandler { RemoveEventHandler(eventHandler) }
         eventHandler = nil
-        statusText = "未启用"
+        statusText = "Disabled"
     }
 }
 
@@ -98,17 +98,17 @@ final class ShortcutRecorderButton: NSButton {
         self.shortcut = shortcut
         self.onChange = onChange
         super.init(frame: .zero)
-        title = "更改快捷键：\(shortcut.label)"
+        title = "Change Shortcut: \(shortcut.label)"
         bezelStyle = .rounded
         target = self
         action = #selector(recordShortcut)
-        setAccessibilityLabel("更改快速窗口全局快捷键")
+        setAccessibilityLabel("Change Quick Window Global Shortcut")
     }
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
     @objc private func recordShortcut() {
         recording = true
-        title = "按下新的组合键，Esc 取消"
+        title = "Press a new shortcut; Esc to cancel"
         window?.makeFirstResponder(self)
     }
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
@@ -118,14 +118,14 @@ final class ShortcutRecorderButton: NSButton {
     }
     override func keyDown(with event: NSEvent) {
         guard recording else { super.keyDown(with: event); return }
-        if event.keyCode == 53 { recording = false; title = "更改快捷键：\(shortcut.label)"; return }
+        if event.keyCode == 53 { recording = false; title = "Change Shortcut: \(shortcut.label)"; return }
         let flags = event.modifierFlags.intersection([.command, .option, .control, .shift])
-        let character = event.keyCode == 49 ? "空格" : (event.charactersIgnoringModifiers ?? "").uppercased()
+        let character = event.keyCode == 49 ? "Space" : (event.charactersIgnoringModifiers ?? "").uppercased()
         let next = QuickWindowShortcut(keyCode: event.keyCode, modifiers: flags.rawValue, character: character)
-        guard next.isValid else { title = "请包含 ⌘、⌥ 或 ⌃，Esc 取消"; return }
+        guard next.isValid else { title = "Include ⌘, ⌥, or ⌃; Esc to cancel"; return }
         recording = false
         shortcut = next
-        title = "更改快捷键：\(next.label)"
+        title = "Change Shortcut: \(next.label)"
         onChange(next)
     }
 }
@@ -167,7 +167,7 @@ extension AppDelegate {
             quickController = nil
         }
         if quickController == nil {
-            quickController = BrowserWindowController(initialURL: chatGPTURL, title: "ChatGPT Swift · 快速窗口", isPopup: true,
+            quickController = BrowserWindowController(initialURL: chatGPTURL, title: "ChatGPT Swift · Quick Window", isPopup: true,
                                                        persistent: true, profileID: profile.id,
                                                        closeHandler: { [weak self] in self?.quickController = nil }, isQuickWindow: true)
         }

@@ -13,6 +13,17 @@ final class ProfileAndMediaPolicyTests: XCTestCase {
         )
     }
 
+    func testBuiltInDefaultNamesKeepTheAppTitleInBothDisplayModes() {
+        for name in ["Default", "默认"] {
+            for mode in [WindowTitleDisplayMode.profileName, .fullProfileName] {
+                XCTAssertEqual(
+                    ProfileWindowTitle.format(profileName: name, isDefault: true, mode: mode),
+                    "ChatGPT Swift"
+                )
+            }
+        }
+    }
+
     func testProfileNameModeUsesEmailLocalPartOrCustomName() {
         XCTAssertEqual(
             ProfileWindowTitle.format(

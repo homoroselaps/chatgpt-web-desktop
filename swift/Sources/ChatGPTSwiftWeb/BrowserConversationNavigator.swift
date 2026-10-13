@@ -77,7 +77,7 @@ extension BrowserWindowController {
           const bubble=node.querySelector('.bg-user-message') || node;
           const question=textOf(bubble), attachments=!!node.querySelector('img,video,audio,canvas');
           if(!question && !attachments) continue;
-          messages.push({node,question:question || '图片或附件问题',answer:''});
+          messages.push({node,question:question || 'Image or attachment question',answer:''});
         }
         const replies=[...main.querySelectorAll(replySelector)].filter(node =>
           !node.closest(messageSelector) && visible(node));
@@ -153,7 +153,7 @@ extension BrowserWindowController {
           @media(prefers-reduced-motion:reduce) { #${railID} .question-marker::before { transition:none; } }
         `;
         (document.head || document.documentElement).append(style);
-        const rail=document.createElement('nav'); rail.id=railID; rail.setAttribute('aria-label','对话问题导航');
+        const rail=document.createElement('nav'); rail.id=railID; rail.setAttribute('aria-label','Conversation question navigation');
         const list=document.createElement('div'); list.id=railID+'-list';
         const preview=document.createElement('div'); preview.id=railID+'-preview'; preview.hidden=true;
         preview.setAttribute('role','tooltip');
@@ -168,7 +168,7 @@ extension BrowserWindowController {
         if(!entry || !button) return;
         state.hover=index;
         state.title.textContent=entry.question;
-        state.answer.textContent=entry.answer || '点击跳转到这条问题';
+        state.answer.textContent=entry.answer || 'Click to jump to this question';
         state.preview.hidden=false;
         const rect=button.getBoundingClientRect();
         state.preview.style.left=clamp(rect.right+12,8,innerWidth-state.preview.offsetWidth-8)+'px';
@@ -237,7 +237,7 @@ extension BrowserWindowController {
           const result=scan(); state.entries=bindMounted(result.messages);
         }
         if(state.preview && state.entries[index]) {
-          showPreview(index); state.answer.textContent='较早的消息尚未载入，请稍后再点一次';
+          showPreview(index); state.answer.textContent='Earlier messages have not loaded yet. Try again shortly.';
         }
       };
       const resetRoute = () => {
@@ -270,7 +270,7 @@ extension BrowserWindowController {
           entries.forEach((entry,index) => {
             const button=document.createElement('button'); button.type='button'; button.className='question-marker';
             button.dataset.index=String(index);
-            button.setAttribute('aria-label',`问题 ${index+1}：${entry.question}`);
+            button.setAttribute('aria-label',`Question ${index+1}: ${entry.question}`);
             button.setAttribute('aria-describedby',railID+'-preview');
             button.addEventListener('pointerenter',() => showPreview(index));
             button.addEventListener('focus',() => showPreview(index));
@@ -315,7 +315,7 @@ extension BrowserWindowController {
         for(const message of messages) {
           if(!message || message.metadata?.is_visually_hidden_from_conversation) continue;
           const role=message.author?.role;
-          if(role==='user') entries.push({question:content(message).slice(0,500)||'图片或附件问题',answer:'',node:null});
+          if(role==='user') entries.push({question:content(message).slice(0,500)||'Image or attachment question',answer:'',node:null});
           else if(role==='assistant' && (!message.channel || message.channel==='final') &&
               (!message.recipient || message.recipient==='all') && entries.length &&
               !entries[entries.length-1].answer && content(message)) entries[entries.length-1].answer=content(message).slice(0,640);

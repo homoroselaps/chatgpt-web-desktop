@@ -17,15 +17,15 @@ enum BrowserStatusOverlayMode: Equatable {
         case .hidden:
             return ""
         case .recovering:
-            return "正在恢复页面"
+            return "Recovering Page"
         case .blank:
-            return "页面显示为空"
+            return "Page Is Blank"
         case .failed:
-            return "页面加载失败"
+            return "Page Failed to Load"
         case let .dataLoadFailed(_, verification):
-            return verification ? "需要完成安全验证" : "ChatGPT 数据加载失败"
+            return verification ? "Security Verification Required" : "ChatGPT Data Failed to Load"
         case .verifying:
-            return "正在自动恢复"
+            return "Recovering Automatically"
         }
     }
 
@@ -60,11 +60,11 @@ enum BrowserStatusOverlayMode: Equatable {
         case .hidden, .verifying:
             return nil
         case .failed:
-            return "重新加载"
+            return "Reload"
         case .recovering, .blank:
-            return "恢复"
+            return "Recover"
         case let .dataLoadFailed(_, verification):
-            return verification ? "验证并重试" : "重新加载"
+            return verification ? "Verify and Retry" : "Reload"
         }
     }
 
@@ -113,7 +113,7 @@ final class BrowserStatusOverlayView: NSVisualEffectView {
 
         titleLabel.stringValue = mode.title
         detailLabel.stringValue = mode.detail
-        setAccessibilityLabel("\(mode.title)。\(mode.detail)")
+        setAccessibilityLabel("\(mode.title). \(mode.detail)")
 
         progressIndicator.isHidden = !mode.showsProgress
         if mode.showsProgress {
@@ -124,7 +124,7 @@ final class BrowserStatusOverlayView: NSVisualEffectView {
 
         if let title = mode.primaryButtonTitle {
             primaryButton.title = title
-            primaryButton.setAccessibilityLabel(title + "页面")
+            primaryButton.setAccessibilityLabel(title + " Page")
             primaryButton.isHidden = false
         } else {
             primaryButton.isHidden = true

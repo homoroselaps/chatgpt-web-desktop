@@ -35,9 +35,9 @@ final class DiagnosticRedactorTests: XCTestCase {
     }
 
     func testProfileAndPageTitleLabelsDoNotExposeCustomValues() {
-        XCTAssertEqual(DiagnosticRedactor.profileLabel(isDefault: true), "默认")
-        XCTAssertEqual(DiagnosticRedactor.profileLabel(isDefault: false), "自定义空间（名称已脱敏）")
-        XCTAssertEqual(DiagnosticRedactor.profileLabel(isDefault: false, persistent: false), "无痕")
+        XCTAssertEqual(DiagnosticRedactor.profileLabel(isDefault: true), "Default")
+        XCTAssertEqual(DiagnosticRedactor.profileLabel(isDefault: false), "Custom Profile (Name Redacted)")
+        XCTAssertEqual(DiagnosticRedactor.profileLabel(isDefault: false, persistent: false), "Private")
         XCTAssertEqual(DiagnosticRedactor.pageTitle("ChatGPT"), "ChatGPT")
         XCTAssertEqual(DiagnosticRedactor.pageTitle("Private conversation title"), "<redacted>")
     }

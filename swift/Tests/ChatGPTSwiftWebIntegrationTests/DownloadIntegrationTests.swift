@@ -1,7 +1,36 @@
+import Darwin
 import XCTest
 @testable import ChatGPTSwiftWeb
 
 final class DownloadIntegrationTests: XCTestCase {
+    private static let imageData = Data(base64Encoded:
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC"
+    )!
+
+    func testImageDownloadRejectsDisguisedAndTruncatedBytesWithoutLeavingFiles() throws {
+        let root = temporaryTestDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        for data in [Data("not an image".utf8), Data(Self.imageData.prefix(24))] {
+            XCTAssertThrowsError(try DownloadStore.saveImage(data, suggestedFilename: "claimed-image.zip", directory: root))
+            XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: root.path), [])
+        }
+    }
+
+    func testQuarantineFailureIsReported() {
+        let missingFile = temporaryTestDirectory().appendingPathComponent("missing.png")
+        XCTAssertThrowsError(try DownloadStore.quarantine(missingFile))
+    }
+
+    func testRemoteImageSaveRejectsDisguisedTemporaryFile() throws {
+        let root = temporaryTestDirectory()
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let source = root.appendingPathComponent("source.tmp")
+        try Data("not an image".utf8).write(to: source)
+        XCTAssertThrowsError(try DownloadStore.moveTemporaryImage(source, suggestedFilename: "claimed-image.zip", directory: root))
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: root.path), ["source.tmp"])
+    }
+
     override func setUp() {
         super.setUp()
         RemoteImageTestURLProtocol.reset()
@@ -12,13 +41,19 @@ final class DownloadIntegrationTests: XCTestCase {
             .appendingPathComponent("ChatGPTSwiftWebDownloadTests-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: root) }
 
-        let firstData = Data("first".utf8)
-        let secondData = Data("second".utf8)
-        let firstURL = try DownloadStore.save(firstData, suggestedFilename: "report.txt", directory: root)
-        let secondURL = try DownloadStore.save(secondData, suggestedFilename: "report.txt", directory: root)
+        let firstData = Self.imageData
+        let secondData = Self.imageData
+        let firstURL = try DownloadStore.saveImage(firstData, suggestedFilename: "report.zip", directory: root)
+        let secondURL = try DownloadStore.saveImage(secondData, suggestedFilename: "report.zip", directory: root)
 
-        XCTAssertEqual(firstURL.lastPathComponent, "report.txt")
-        XCTAssertEqual(secondURL.lastPathComponent, "report-1.txt")
+        for url in [firstURL, secondURL] {
+            let values = try url.resourceValues(forKeys: [.quarantinePropertiesKey])
+            XCTAssertNotNil(values.quarantineProperties)
+            XCTAssertEqual(try FileManager.default.attributesOfItem(atPath: url.path)[.posixPermissions] as? NSNumber, 0o600)
+            XCTAssertGreaterThan(getxattr(url.path, "com.apple.quarantine", nil, 0, 0, 0), 0)
+        }
+        XCTAssertEqual(firstURL.lastPathComponent, "report.png")
+        XCTAssertEqual(secondURL.lastPathComponent, "report-1.png")
         XCTAssertEqual(try Data(contentsOf: firstURL), firstData)
         XCTAssertEqual(try Data(contentsOf: secondURL), secondData)
         XCTAssertEqual(firstURL.deletingLastPathComponent().standardizedFileURL, root.standardizedFileURL)
@@ -33,17 +68,20 @@ final class DownloadIntegrationTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: root) }
 
         let sourceURL = sourceDirectory.appendingPathComponent("streamed.tmp")
-        try Data("streamed image".utf8).write(to: sourceURL)
+        try Self.imageData.write(to: sourceURL)
 
-        let destinationURL = try DownloadStore.moveTemporaryFile(
+        let destinationURL = try DownloadStore.moveTemporaryImage(
             sourceURL,
             suggestedFilename: "image.png",
             directory: destinationDirectory
         )
 
+        let values = try destinationURL.resourceValues(forKeys: [.quarantinePropertiesKey])
+        XCTAssertNotNil(values.quarantineProperties)
+        XCTAssertGreaterThan(getxattr(destinationURL.path, "com.apple.quarantine", nil, 0, 0, 0), 0)
         XCTAssertFalse(FileManager.default.fileExists(atPath: sourceURL.path))
         XCTAssertEqual(destinationURL.lastPathComponent, "image.png")
-        XCTAssertEqual(try Data(contentsOf: destinationURL), Data("streamed image".utf8))
+        XCTAssertEqual(try Data(contentsOf: destinationURL), Self.imageData)
     }
 
     func testRemoteImageLoaderStreamsValidImageWithoutSendingCookies() throws {
@@ -68,6 +106,8 @@ final class DownloadIntegrationTests: XCTestCase {
         }
         defer { try? FileManager.default.removeItem(at: remoteImage.fileURL) }
 
+        XCTAssertGreaterThan(getxattr(remoteImage.fileURL.path, "com.apple.quarantine", nil, 0, 0, 0), 0)
+        XCTAssertEqual(try FileManager.default.attributesOfItem(atPath: remoteImage.fileURL.path)[.posixPermissions] as? NSNumber, 0o600)
         XCTAssertEqual(remoteImage.mimeType, "image/png")
         XCTAssertEqual(remoteImage.byteCount, RemoteImageTestURLProtocol.validImageData.count)
         XCTAssertEqual(try Data(contentsOf: remoteImage.fileURL), RemoteImageTestURLProtocol.validImageData)

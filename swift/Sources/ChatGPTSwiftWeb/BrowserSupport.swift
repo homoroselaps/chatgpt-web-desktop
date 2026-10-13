@@ -458,19 +458,19 @@ enum FingerprintCatalog {
     ) -> String {
         var lines: [String] = []
         if let fingerprint {
-            lines.append("推荐基线：开启，当前空间固定为 \(fingerprint.displayName)")
+            lines.append("Recommended baseline: on, profile fixed to \(fingerprint.displayName)")
             let issues = consistencyIssues(for: fingerprint)
             if issues.isEmpty {
-                lines.append("Safari 一致性：通过基础检查")
+                lines.append("Safari consistency: basic checks passed")
             } else {
-                lines.append("Safari 一致性：需注意 " + issues.joined(separator: "；"))
+                lines.append("Safari consistency: check " + issues.joined(separator: "; "))
             }
         } else {
-            lines.append("推荐基线：关闭，当前空间使用真实默认 Safari/WebKit 指纹")
+            lines.append("Recommended baseline: off, profile uses the native Safari/WebKit fingerprint")
         }
-        lines.append("增强隐私：\(enhancedPrivacyEnabled ? "开启，Canvas/WebGL/Audio 等使用稳定扰动" : "关闭，JS 层高熵指纹暴露更多")")
-        lines.append("WebRTC：\(webRTCProtectionEnabled ? "已屏蔽构造器和设备枚举" : "关闭，可能暴露本机网络和设备枚举")")
-        lines.append("不可控残余：TLS/HTTP2/Worker/字体/GPU/IP/行为模式仍不能保证伪装成另一台真实设备")
+        lines.append("Enhanced Privacy: \(enhancedPrivacyEnabled ? "On, Canvas/WebGL/Audio use stable perturbations" : "Off, more high-entropy JavaScript fingerprint signals exposed")")
+        lines.append("WebRTC: \(webRTCProtectionEnabled ? "Constructors and device enumeration blocked" : "Off, may expose local network and device enumeration")")
+        lines.append("Uncontrolled signals: TLS/HTTP2/workers/fonts/GPU/IP/behavior cannot reliably mimic another real device")
         return lines.joined(separator: "\n")
     }
 
@@ -483,30 +483,30 @@ enum FingerprintCatalog {
             && !ua.contains("Firefox")
             && !ua.contains("Edg")
         if !isSafariFamily {
-            issues.append("UA 不是 Safari/WebKit 家族")
+            issues.append("UA is not in the Safari/WebKit family")
         }
         if ua.contains("Macintosh") && fingerprint.platform != "MacIntel" {
-            issues.append("Mac UA 与 platform 不一致")
+            issues.append("Mac UA and platform do not match")
         }
         if ua.contains("iPhone") && (fingerprint.platform != "iPhone" || fingerprint.maxTouchPoints == 0) {
-            issues.append("iPhone UA 与触控/platform 不一致")
+            issues.append("iPhone UA and touch/platform do not match")
         }
         if ua.contains("iPad") && fingerprint.maxTouchPoints == 0 {
-            issues.append("iPad UA 缺少触控能力")
+            issues.append("iPad UA lacks touch support")
         }
         if fingerprint.maxTouchPoints == 0 && (fingerprint.platform == "iPhone" || fingerprint.platform == "iPad") {
-            issues.append("移动 platform 缺少触控能力")
+            issues.append("Mobile platform lacks touch support")
         }
         if fingerprint.devicePixelRatio < 1.0 || fingerprint.devicePixelRatio > 3.0 {
-            issues.append("DPR 超出常见 Safari 设备范围")
+            issues.append("DPR is outside the usual Safari device range")
         }
         if fingerprint.screenWidth < 320 || fingerprint.screenHeight < 480 {
-            issues.append("屏幕尺寸过小")
+            issues.append("Screen size is too small")
         }
         return issues
     }
 
-    /// 指纹脚本使用的时区对齐片段。默认 Profile 不调用它，以保持原生 WebKit 特征稳定。
+    /// Timezone alignment for fingerprint scripts; the default profile keeps native WebKit behavior.
     private static func timezoneAlignmentBlock(timezone: String) -> String {
         return """
           try {
@@ -910,7 +910,7 @@ enum FingerprintCatalog {
 
         return FingerprintProfile(
             presetID: "random-\(UUID().uuidString)",
-            displayName: "随机：Mac Safari 稳定指纹",
+            displayName: "Random: Stable Mac Safari Fingerprint",
             userAgent: macSafariUserAgent,
             acceptLanguages: defaultAcceptLanguages,
             platform: "MacIntel",
@@ -936,7 +936,7 @@ enum FingerprintCatalog {
 
         return FingerprintProfile(
             presetID: "random-\(UUID().uuidString)",
-            displayName: "随机：iPad-ish",
+            displayName: "Random: iPad-like",
             userAgent: iPadSafari17UserAgent,
             acceptLanguages: defaultAcceptLanguages,
             platform: "iPad",
@@ -962,7 +962,7 @@ enum FingerprintCatalog {
 
         return FingerprintProfile(
             presetID: "random-\(UUID().uuidString)",
-            displayName: "随机：iPhone-ish",
+            displayName: "Random: iPhone-like",
             userAgent: iPhoneSafari17UserAgent,
             acceptLanguages: defaultAcceptLanguages,
             platform: "iPhone",
@@ -1046,7 +1046,7 @@ enum ProfileStore {
     }
 
     static func resetToDefaultAfterRecovery() {
-        let profiles = [WebProfile(id: defaultProfileID, name: "默认", createdAt: Date())]
+        let profiles = [WebProfile(id: defaultProfileID, name: "Default", createdAt: Date())]
         if let data = try? JSONEncoder().encode(profiles) {
             UserDefaults.standard.set(data, forKey: profilesDefaultsKey)
         }
@@ -1084,14 +1084,14 @@ enum ProfileStore {
                     UserDefaults.standard.set(data, forKey: corruptProfilesBackupKey)
                 }
                 UserDefaults.standard.set(true, forKey: metadataRecoveryRequiredKey)
-                return [WebProfile(id: defaultProfileID, name: "默认", createdAt: Date(timeIntervalSince1970: 0))]
+                return [WebProfile(id: defaultProfileID, name: "Default", createdAt: Date(timeIntervalSince1970: 0))]
             }
             guard let decoded = try? JSONDecoder().decode([WebProfile].self, from: data) else {
                 if UserDefaults.standard.data(forKey: corruptProfilesBackupKey) == nil {
                     UserDefaults.standard.set(data, forKey: corruptProfilesBackupKey)
                 }
                 UserDefaults.standard.set(true, forKey: metadataRecoveryRequiredKey)
-                return [WebProfile(id: defaultProfileID, name: "默认", createdAt: Date(timeIntervalSince1970: 0))]
+                return [WebProfile(id: defaultProfileID, name: "Default", createdAt: Date(timeIntervalSince1970: 0))]
             }
             profiles = decoded
         } else {
@@ -1104,7 +1104,7 @@ enum ProfileStore {
                 UserDefaults.standard.set(data, forKey: corruptProfilesBackupKey)
             }
             UserDefaults.standard.set(true, forKey: metadataRecoveryRequiredKey)
-            return [WebProfile(id: defaultProfileID, name: "默认", createdAt: Date(timeIntervalSince1970: 0))]
+            return [WebProfile(id: defaultProfileID, name: "Default", createdAt: Date(timeIntervalSince1970: 0))]
         }
 
         // A user or recovery tool may have restored a valid metadata blob after a previous
@@ -1113,7 +1113,7 @@ enum ProfileStore {
         UserDefaults.standard.removeObject(forKey: metadataRecoveryRequiredKey)
 
         if !profiles.contains(where: { $0.id == defaultProfileID }) {
-            profiles.insert(WebProfile(id: defaultProfileID, name: "默认", createdAt: Date()), at: 0)
+            profiles.insert(WebProfile(id: defaultProfileID, name: "Default", createdAt: Date()), at: 0)
             save(profiles)
         }
         return profiles
@@ -1209,7 +1209,7 @@ enum ProfileStore {
     static func resetDefaultProfile() {
         var profiles = loadProfiles()
         profiles.removeAll { $0.id == defaultProfileID }
-        profiles.insert(WebProfile(id: defaultProfileID, name: "默认", createdAt: Date()), at: 0)
+        profiles.insert(WebProfile(id: defaultProfileID, name: "Default", createdAt: Date()), at: 0)
         save(profiles)
         removeHomepage(for: defaultProfileID)
         disableFingerprint(for: defaultProfileID)
@@ -1655,21 +1655,21 @@ let passkeyLimitationNoticeScript = """
 
     const title = document.createElement('div');
     title.textContent = fallbackActive()
-      ? (fallbackUsed() ? '已阻止这个页面调用 passkey / WebAuthn。' : '已为这个本地 WKWebView 关闭 passkey / WebAuthn。')
-      : '这个本地 WKWebView wrapper 不能使用 chatgpt.com / openai.com 的 Apple 通行密钥。';
+      ? (fallbackUsed() ? 'This page was blocked from using passkeys / WebAuthn.' : 'Passkeys / WebAuthn are disabled in this local WKWebView.')
+      : 'This local WKWebView wrapper cannot use Apple passkeys for chatgpt.com / openai.com.';
     title.style.cssText = 'font-weight:650;margin:0 0 4px';
     notice.appendChild(title);
 
     const detail = document.createElement('div');
     detail.textContent = fallbackActive()
-      ? '请继续使用邮箱验证码、密码或“尝试其他方法”。如必须用通行密钥，请改用 Safari、Chrome 或官方 ChatGPT App。'
-      : '请点“尝试其他方法”，或用 Safari、Chrome、官方 ChatGPT App 完成 passkey 登录。';
+      ? 'Continue with an email code, password, or “Try another method”. For passkeys, use Safari, Chrome, or the official ChatGPT app.'
+      : 'Click “Try another method”, or sign in with a passkey in Safari, Chrome, or the official ChatGPT app.';
     detail.style.cssText = 'color:rgba(255,255,255,.78);margin:0';
     notice.appendChild(detail);
 
     const close = document.createElement('button');
     close.type = 'button';
-    close.setAttribute('aria-label', '关闭提示');
+    close.setAttribute('aria-label', 'Dismiss Notification');
     close.textContent = '×';
     close.style.cssText = [
       'position:absolute',

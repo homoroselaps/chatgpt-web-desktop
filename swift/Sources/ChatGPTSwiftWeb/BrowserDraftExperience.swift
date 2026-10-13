@@ -18,7 +18,7 @@ extension BrowserWindowController {
         """#) { [weak self] result, error in
             guard let self, !self.isDisposing else { return }
             guard error == nil, let values = result as? [String: Bool] else {
-                self.draftCaptureDiagnostics = "页面捕获状态不可用"
+                self.draftCaptureDiagnostics = "Page capture status unavailable"
                 return
             }
             self.draftCaptureDiagnostics = values.keys.sorted().map { "\($0)=\(values[$0]!)" }.joined(separator: ", ")
@@ -44,18 +44,18 @@ extension BrowserWindowController {
 
     func handlePromptDraftMessage(_ message: WKScriptMessage) {
         draftNativeMessageCount += 1
-        guard persistent else { draftNativeDropReason = "临时窗口"; return }
+        guard persistent else { draftNativeDropReason = "Temporary window"; return }
         guard !isDisposing, ProfileStore.pendingDataMutation == nil,
               message.frameInfo.isMainFrame, Self.isTrustedChatGPTBridgeOrigin(message.frameInfo.securityOrigin),
               let payload = message.body as? [String: Any], let path = payload["path"] as? String,
-              Self.validDraftPath(path), let action = payload["action"] as? String else { draftNativeDropReason = "来源或载荷"; return }
+              Self.validDraftPath(path), let action = payload["action"] as? String else { draftNativeDropReason = "Origin or payload"; return }
         if action == "ready" { configureDraftExperience(); draftNativeDropReason = "ready"; return }
         // Page events can save a draft, but cannot delete it. In particular, an empty composer
         // or an arriving reply is never interpreted as a request to clear the local copy.
-        guard action == "save" else { draftNativeDropReason = "未知动作"; return }
+        guard action == "save" else { draftNativeDropReason = "Unknown action"; return }
         guard PromptDraftStore.isRestoreEnabled(),
               let text = payload["text"] as? String, text.count <= 200_000,
-              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { draftNativeDropReason = "空输入或超限"; return }
+              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { draftNativeDropReason = "Empty input or limit exceeded"; return }
         PromptDraftStore.saveDraft(text, profileID: profileID, conversationID: draftKey(for: path))
         draftNativeSaveCount += 1
         draftNativeDropReason = "save"
@@ -66,7 +66,7 @@ extension BrowserWindowController {
               Self.canInjectPromptContent(into: webView.url) else { return }
         let path = webView.url?.path.isEmpty == false ? webView.url!.path : "/"
         let text = PromptDraftStore.draft(for: profileID, conversationID: draftKey(for: path))
-        guard !text.isEmpty else { showToast("本页没有可恢复的本机草稿"); return }
+        guard !text.isEmpty else { showToast("No saved local draft for this page"); return }
         restoreDraft(text, path: path)
     }
 
@@ -82,8 +82,8 @@ extension BrowserWindowController {
                 return
             }
             let reason = (result as? [String: Any])?["reason"] as? String
-            let detail = reason == "composer not empty" ? "输入框已有内容，保留现有输入；本机草稿仍在" : "页面或输入框尚未就绪，本机草稿仍在"
-            self.showToast("恢复未完成：\(detail)", actionTitle: "重试", action: { [weak self] in self?.restoreDraft(text, path: path) }, duration: 12)
+            let detail = reason == "composer not empty" ? "The input box already has content. Existing input and the local draft were preserved" : "The page or input box is not ready. The local draft was preserved"
+            self.showToast("Restore incomplete: \(detail)", actionTitle: "Retry", action: { [weak self] in self?.restoreDraft(text, path: path) }, duration: 12)
             if error != nil { browserLogger.debug("Draft restore script unavailable") }
         }
     }
