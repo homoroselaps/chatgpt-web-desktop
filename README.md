@@ -1,5 +1,3 @@
-<h2 align="center">🌐 <a href="./README.zh-CN.md">中文用户：点击查看中文版本</a></h2>
-
 # ChatGPT Web Desktop
 
 <p align="center">
@@ -7,17 +5,7 @@
   <em>Never let official apps silently downgrade your thinking depth. Force maximum reasoning effort on complex code, math, and research — wrapped in a lightweight, isolated macOS shell (macOS 12+ Universal).</em>
 </p>
 
-<p align="center">
-  <a href="https://github.com/GravityPoet/chatgpt-web-desktop/releases/latest"><img src="https://img.shields.io/github/v/release/GravityPoet/chatgpt-web-desktop?label=Latest%20Release&color=007AFF" alt="Latest Release"></a>
-  <a href="https://github.com/GravityPoet/chatgpt-web-desktop/releases/latest"><img src="https://img.shields.io/badge/macOS-12.0%2B%20Universal-34C759" alt="macOS 12+ Universal"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
-</p>
 
-<p align="center">
-  <a href="https://github.com/GravityPoet/chatgpt-web-desktop/releases/latest/download/ChatGPT.Swift.dmg">
-    <img src="https://img.shields.io/badge/Download-ChatGPT.Swift.dmg%20(2.7MB)-007AFF?style=for-the-badge&logo=apple&logoColor=white" alt="Download ChatGPT Swift DMG">
-  </a>
-</p>
 
 ---
 
@@ -106,10 +94,3 @@ The universal app will be created at `dist/ChatGPT Swift.zip`.
 This is an independent open-source project and is not affiliated with, endorsed by, or sponsored by OpenAI. ChatGPT, OpenAI, and associated trademarks belong to OpenAI.
 
 ---
-
-<p align="center">
-  <strong>Ready to take full control of your ChatGPT reasoning?</strong><br><br>
-  <a href="https://github.com/GravityPoet/chatgpt-web-desktop/releases/latest/download/ChatGPT.Swift.dmg">
-    <img src="https://img.shields.io/badge/Download-ChatGPT.Swift.dmg%20(2.7MB)-007AFF?style=for-the-badge&logo=apple&logoColor=white" alt="Download ChatGPT Swift DMG">
-  </a>
-</p>
